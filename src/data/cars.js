@@ -1,6 +1,7 @@
 export const cars = [
   {
     id: 1,
+    registration: 'MW08BBU',
     brand: 'VAUXHALL',
     model: 'MERIVA',
     colour: 'LIGHT BLUE',
@@ -29,6 +30,7 @@ export const cars = [
   },
   {
     id: 2,
+    registration: 'FN56YHH',
     brand: 'RENAULT',
     model: 'MEGAN',
     colour: 'GREY',
@@ -57,6 +59,7 @@ export const cars = [
   },
   {
     id: 3,
+    registration: 'EA60XUY',
     brand: 'MITSUBISHI',
     model: 'LANCER',
     colour: 'DARK BLUE',
