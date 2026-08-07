@@ -48,15 +48,17 @@ This app solves all of the above with a single-page React app + SQLite backend.
 **Frontend:** React 18, Vite, Tailwind CSS, TypeScript  
 **Backend:** Node.js, Express, SQLite3  
 **Tooling:** ESLint, Prettier, Git  
-**Testing:** Playwright, Playwright Test, GitHub Actions 
+**Testing:** Playwright, Playwright Test, GitHub Actions   
 **DevOps:** GitHub, npm scripts
 
 ## Architecture
+```
 Client (React + Vite) 
     ↓ REST API 
 Express Server 
     ↓ SQL Queries
 SQLite DB (cars.db)
+```
 
 - **Frontend**: SPA with component structure: `CarTable`, `AddCarModal`, `EditCarModal`, `Dashboard`  
 - **API Layer**: Express routes `/api/cars` for GET, POST, PUT, DELETE  
@@ -103,11 +105,13 @@ Playwright projects for Chromium, Firefox, WebKit. Mobile Chrome + Mobile Safari
 **Tool:** Playwright + TypeScript  
 **Pattern:** Page Object Model for maintainability  
 **Structure:**
+```
 /tests
   /pages       - CarTablePage.ts, AddCarPage.ts
   /specs       - add-car.spec.ts, profit-loss.spec.ts
   /fixtures    - seed.db, test-data.ts
 playwright.config.ts
+```
 
 **CI:** GitHub Actions workflow runs full suite on push. HTML report + trace uploaded as artifacts.  
 **Coverage Goal:** 80% of user journeys, 100% of financial calc logic.
