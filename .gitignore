@@ -1,4 +1,29 @@
-# Logs
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# testing
+coverage/
+playwright-report/
+test-results/
+
+# production build
+dist/
+dist-ssr/
+build/
+
+# env files - NEVER commit secrets
+.env
+.env.*
+*.local
+
+# database
+*.db
+*.sqlite
+*.sqlite3
+
+# logs
 logs
 *.log
 npm-debug.log*
@@ -7,16 +32,13 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# OS junk
+.DS_Store
+Thumbs.db
 
 # Editor directories and files
-.vscode/*
-!.vscode/extensions.json
+.vscode/
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
