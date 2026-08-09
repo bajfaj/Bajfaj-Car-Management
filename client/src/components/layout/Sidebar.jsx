@@ -39,11 +39,11 @@ export default function Sidebar({ onLinkClick }) {
           Cars
         </NavLink>
         <NavLink 
-          to="/add-car" 
+          to="/deleted-cars" 
           onClick={onLinkClick}
           className={linkClass}
         >
-          Add Car
+          Deleted Cars
         </NavLink>
       </nav>
     </div>

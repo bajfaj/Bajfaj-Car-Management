@@ -4,7 +4,7 @@ import Sidebar from './components/layout/Sidebar'
 import Header from './components/layout/Header'
 import Dashboard from './pages/Dashboard'
 import CarsPage from './pages/CarsPage'
-import AddCarPage from './pages/AddCarPage'
+import DeletedCarsPage from './pages/DeletedCarsPage' // NEW
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -44,7 +44,7 @@ function App() {
               <Route path="/" element={<Navigate to="/cars" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/cars" element={<CarsPage />} />
-              <Route path="/add-car" element={<AddCarPage />} />
+              <Route path="/deleted-cars" element={<DeletedCarsPage />} /> {/* NEW */}
             </Routes>
           </main>
         </div>
