@@ -1,60 +1,51 @@
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+require('dotenv').config();
 
-const db = new sqlite3.Database(path.join(__dirname, 'cars.db'), (err) => {
-  if (err) {
-    console.error(err.message);
-  } else {
-    console.log('Connected to cars.db');
-    
-    db.serialize(() => {
-      // Create cars table with deleted columns built-in
-      // IF NOT EXISTS means it won't overwrite if you already have data
-      db.run(`CREATE TABLE IF NOT EXISTS cars (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        registration TEXT,
-        make TEXT NOT NULL,
-        model TEXT NOT NULL,
-        colour TEXT,
-        engine TEXT,
-        transmission TEXT,
-        fuel TEXT,
-        logbook TEXT,
-        purchase_year INTEGER,
-        source TEXT,
-        winning_bid REAL,
-        additional_fee REAL,
-        delivery REAL,
-        repair_cost REAL,
-        mechanic TEXT,
-        personal_use TEXT,
-        mileage_purchase INTEGER,
-        total_amount_spent REAL,
-        status TEXT DEFAULT 'Held',
-        sale_price REAL,
-        sale_year INTEGER,
-        platform_sold_on TEXT,
-        advertised_on TEXT,
-        advert_duration TEXT,
-        mileage_sale INTEGER,
-        profit_loss REAL,
-        deleted_at TEXT,
-        deleted_reason TEXT
-      )`);
-      
-      // Audit log table
-      db.run(`CREATE TABLE IF NOT EXISTS audit_log (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        car_id INTEGER,
-        action TEXT,
-        old_data TEXT,
-        new_data TEXT,
-        timestamp TEXT DEFAULT CURRENT_TIMESTAMP
-      )`);
-      
-      console.log('Tables are ready');
-    });
-  }
-});
+let db;
+
+if (process.env.DB_HOST) {
+  // RAILWAY = MySQL
+  const mysql = require('mysql2/promise');
+  const pool = mysql.createPool({
+    host: process.env.DB_HOST, user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD, database: process.env.DB_NAME,
+    waitForConnections: true, connectionLimit: 10,
+  });
+  
+  db = {
+    query: async (sql, params) => {
+      const [rows] = await pool.query(sql, params);
+      return rows;
+    },
+    run: async (sql, params) => { // for INSERT/UPDATE/DELETE
+      const [result] = await pool.query(sql, params);
+      return { lastID: result.insertId, changes: result.affectedRows };
+    }
+  };
+  console.log("Connected to MySQL");
+  // run createTablesMySQL here...
+
+} else {
+  // LOCAL = SQLite
+  const sqlite3 = require('sqlite3').verbose();
+  const sqliteDb = new sqlite3.Database(path.join(__dirname, 'cars.db'));
+  
+  db = {
+    query: (sql, params) => { // for SELECT
+      return new Promise((resolve, reject) => {
+        sqliteDb.all(sql, params, (err, rows) => err? reject(err) : resolve(rows));
+      });
+    },
+    run: (sql, params) => { // for INSERT/UPDATE/DELETE
+      return new Promise((resolve, reject) => {
+        sqliteDb.run(sql, params, function(err) {
+          err? reject(err) : resolve({ lastID: this.lastID, changes: this.changes });
+        });
+      });
+    }
+  };
+  console.log("Connected to SQLite");
+  // run createTablesSQLite here...
+}
 
 module.exports = db;
