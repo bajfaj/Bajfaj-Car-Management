@@ -8,6 +8,7 @@ export default function AddCarModal({ isOpen, onClose, onSave }) {
   })
 
   const [totalSpent, setTotalSpent] = useState(0)
+  const [error, setError] = useState('') // NEW
 
   useEffect(() => {
     const bid = Number(formData.winningBid) || 0
@@ -27,6 +28,14 @@ export default function AddCarModal({ isOpen, onClose, onSave }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    setError('') // NEW
+
+    // NEW: Validation
+    if (!formData.registration ||!formData.brand ||!formData.model ||!formData.purchaseYear) {
+      setError('Registration, Brand, Model and Purchase Year are required')
+      return
+    }
+
     const newCar = {
     ...formData,
       id: Date.now(),
@@ -53,20 +62,12 @@ export default function AddCarModal({ isOpen, onClose, onSave }) {
 
   // FORCE STYLES so nothing can override
   const inputStyle = {
-    width: '100%',
-    padding: '8px 12px',
-    border: '1px solid #9ca3af', // DARKER gray-400 so you can SEE it
-    borderRadius: '6px',
-    fontSize: '14px',
-    outline: 'none',
-    boxSizing: 'border-box'
+    width: '100%', padding: '8px 12px', border: '1px solid #9ca3af',
+    borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box'
   }
   const labelStyle = {
-    display: 'block',
-    fontSize: '12px',
-    fontWeight: 500,
-    color: '#374151',
-    marginBottom: '4px'
+    display: 'block', fontSize: '12px', fontWeight: 500,
+    color: '#374151', marginBottom: '4px'
   }
 
   return (
@@ -79,20 +80,21 @@ export default function AddCarModal({ isOpen, onClose, onSave }) {
         </div>
 
         <div style={{overflowY: 'auto', padding: '24px', minHeight: 0}}>
+          {error && <div style={{marginBottom: '16px', padding: '8px', background: '#fee2e2', color: '#b91c1c', borderRadius: '6px'}}>{error}</div>} {/* NEW */}
           <form id="add-car-form" onSubmit={handleSubmit} style={{display: 'flex', flexDirection: 'column', gap: '24px'}}>
             <div>
               <h4 style={{fontSize: '16px', fontWeight: 500, color: '#111827', marginBottom: '12px'}}>Car Details</h4>
               <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
                 <div>
-                  <label style={labelStyle}>Registration</label>
+                  <label style={labelStyle}>Registration *</label> {/* Added * */}
                   <input name="registration" value={formData.registration} onChange={handleChange} placeholder="e.g. AB12 CDE" required style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>Brand</label>
+                  <label style={labelStyle}>Brand *</label>
                   <input name="brand" value={formData.brand} onChange={handleChange} placeholder="e.g. BMW" required style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>Model</label>
+                  <label style={labelStyle}>Model *</label>
                   <input name="model" value={formData.model} onChange={handleChange} placeholder="e.g. 320i" required style={inputStyle} />
                 </div>
                 <div>
@@ -127,7 +129,7 @@ export default function AddCarModal({ isOpen, onClose, onSave }) {
             <div>
               <h4 style={{fontSize: '16px', fontWeight: 500, color: '#111827', marginBottom: '12px'}}>Purchase Info</h4>
               <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
-                <div><label style={labelStyle}>Purchase Year</label><input name="purchaseYear" type="number" value={formData.purchaseYear} onChange={handleChange} placeholder="e.g. 2023" required style={inputStyle} /></div>
+                <div><label style={labelStyle}>Purchase Year *</label><input name="purchaseYear" type="number" value={formData.purchaseYear} onChange={handleChange} placeholder="e.g. 2023" required style={inputStyle} /></div>
                 <div><label style={labelStyle}>Source</label><input name="source" value={formData.source} onChange={handleChange} placeholder="e.g. COPART - YORK" style={inputStyle} /></div>
                 <div><label style={labelStyle}>Mechanic</label><input name="mechanic" value={formData.mechanic} onChange={handleChange} placeholder="e.g. John" style={inputStyle} /></div>
                 <div><label style={labelStyle}>Winning Bid £</label><input name="winningBid" type="number" value={formData.winningBid} onChange={handleChange} placeholder="e.g. 1500" style={inputStyle} /></div>

@@ -12,12 +12,13 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
     advertDuration: '',
   })
 
+  const [error, setError] = useState('') // CHANGED: use error state instead of alert
   const [profit, setProfit] = useState(0)
 
   useEffect(() => {
     if (!car) return
     const sale = Number(formData.saleAmount) || 0
-    setProfit(sale - car.totalSpent)
+    setProfit(sale - (car.totalSpent || 0))
   }, [formData.saleAmount, car])
 
   if (!isOpen ||!car) return null
@@ -30,7 +31,7 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
   const handleCheckboxChange = (platform) => {
     setFormData(prev => {
       const platforms = prev.advertisedPlatforms.includes(platform)
-      ? prev.advertisedPlatforms.filter(p => p!== platform)
+     ? prev.advertisedPlatforms.filter(p => p!== platform)
         : [...prev.advertisedPlatforms, platform]
       return {...prev, advertisedPlatforms: platforms }
     })
@@ -38,16 +39,25 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (formData.advertisedPlatforms.length === 0) {
-      alert('Please select at least one Advertised Platform')
+    setError('') // CHANGED
+
+    // CHANGED: Full validation
+    if (!formData.saleAmount ||!formData.saleYear ||!formData.platformSoldOn) {
+      setError('Sale Amount, Sale Year and Platform Sold On are required')
       return
     }
+    if (formData.advertisedPlatforms.length === 0) {
+      setError('Please select at least one Advertised Platform')
+      return
+    }
+
     const updatedCar = {
-    ...car,
-    ...formData,
+   ...car,
+   ...formData,
       saleAmount: Number(formData.saleAmount),
-      mileageSale: Number(formData.mileageSale) || null,
+      mileageSale: Number(formData.mileageSale) || 0,
       saleYear: Number(formData.saleYear),
+      advertisedOn: formData.advertisedPlatforms.join(', '), // FIX: Match API field name
       profit,
       status: 'Sold',
     }
@@ -78,6 +88,7 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
 
         {/* Scrollable Body */}
         <div className="overflow-y-auto p-6 min-h-0">
+          {error && <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">{error}</div>} {/* NEW */}
           <form id="sell-car-form" onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -101,7 +112,7 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
                   onChange={handleChange}
                   placeholder="e.g. 2024"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border-gray-300 rounded-md"
                 />
               </div>
               <div>
@@ -111,7 +122,7 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
                   value={formData.platformSoldOn}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900" // FIX: text-gray-900 not 500
                 >
                   <option value="" disabled>Select platform</option>
                   {PLATFORMS.map(p => (
@@ -160,15 +171,12 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
                   </label>
                 ))}
               </div>
-              {formData.advertisedPlatforms.length === 0 && (
-                <p className="text-xs text-red-500">Select at least one platform</p>
-              )}
             </div>
 
             <div className="bg-gray-50 p-4 rounded-md space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-700">Total Spent:</span>
-                <span className="text-sm font-medium text-gray-900">£{car.totalSpent.toLocaleString()}</span>
+                <span className="text-sm font-medium text-gray-900">£{car.totalSpent?.toLocaleString() || 0}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-700">Sale Amount:</span>
@@ -189,15 +197,14 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-gray-300 rounded-md hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             form="sell-car-form"
-            disabled={formData.advertisedPlatforms.length === 0}
-            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
           >
             Confirm Sale
           </button>
