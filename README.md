@@ -3,7 +3,7 @@
 ## Project Overview
 Full-stack web application to manage car inventory, replacing manual spreadsheet workflows. Tracks vehicle purchases, repairs, sales, and auto-calculates financial metrics including total spend and profit/loss. Built post-redundancy to enhance modern QA engineering, React development, and product delivery skills.
 
-**Status:** M1 + M2 Complete | M3 In Progress | M4 - M5 In Pipeline 
+**Status:** M1 + M2 + M3 Complete | M4 - M5 In Pipeline 
 **Live Demo:** TBD  
 
 ## Business Problem
@@ -29,10 +29,11 @@ This app solves all of the above with a single-page React app + SQLite backend.
 - Mobile-responsive modals with pinned Save/Cancel buttons and scrollable content
 - Form validation: required fields, date logic, positive numbers
 
-**M3: Dashboard + Filters** `In Progress`
-- Filter bar: Status, Brand, Fuel Type, Date Range
-- KPI cards: Avg Days to Sell, Best Selling Platform, ROI %
-- Natural language query: "Car with repair > 300"
+**M3: Dashboard + Reports**
+- 3-page structure: Dashboard, Cars, Reports/Analytics
+- Cars page with tabs: All, Held, Sold, Deleted + soft delete + restore
+- Reports page with Year/Brand filters + KPI cards + summary table
+- Responsive sidebar + header layout
 
 **M4: Polish + Backup** `Planned`
 - Export/Import JSON for backup and migration
