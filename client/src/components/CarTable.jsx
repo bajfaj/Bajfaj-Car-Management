@@ -34,12 +34,12 @@ export default function CarTable() {
   // 1. LOAD CARS FROM API
   const fetchCars = () => {
     fetch(API_URL)
-   .then(res => res.json())
-   .then(data => {
+ .then(res => res.json())
+ .then(data => {
         setCars(data)
         setLoading(false)
       })
-   .catch(err => {
+ .catch(err => {
         console.error('Failed to fetch cars:', err)
         setLoading(false)
       })
@@ -95,7 +95,6 @@ export default function CarTable() {
   const handleDeleteCar = async () => {
     if (!carToDelete) return;
 
-    // Use custom reason if "Other" is selected
     const finalReason = deleteReason === 'Other'? deleteOtherReason.trim() : deleteReason;
 
     if (deleteReason === 'Other' &&!finalReason) {
@@ -126,32 +125,40 @@ export default function CarTable() {
   if (loading) return <div className="p-4">Loading cars...</div>
 
   const ActionButtons = ({ car }) => (
-    <div className="flex items-center gap-3">
+  <div className="flex items-center gap-3">
+    {car.status === 'Sold'? (
       <button
         onClick={() => openEditModal(car)}
-        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium"
-        title="Edit car"
+        className="text-purple-600 hover:text-purple-800 font-medium"
+      >
+        Edit Sale
+      </button>
+    ) : (
+      <button
+        onClick={() => openEditModal(car)}
+        className="text-blue-600 hover:text-blue-800 font-medium"
       >
         Edit
       </button>
-      {car.status === 'Held' && (
-        <button
-          onClick={() => openSellModal(car)}
-          className="flex items-center gap-1 text-green-600 hover:text-green-800 font-medium"
-          title="Mark as sold"
-        >
-          Sell
-        </button>
-      )}
+    )}
+    
+    {car.status === 'Held' && (
       <button
-        onClick={() => openDeleteModal(car)}
-        className="flex items-center gap-1 text-red-600 hover:text-red-800 font-medium"
-        title="Delete car"
+        onClick={() => openSellModal(car)}
+        className="text-green-600 hover:text-green-800 font-medium"
       >
-        Delete
+        Sell
       </button>
-    </div>
-  )
+    )}
+    
+    <button
+      onClick={() => openDeleteModal(car)}
+      className="text-red-600 hover:text-red-800 font-medium"
+    >
+      Delete
+    </button>
+  </div>
+)
 
   return (
     <div className="p-4">
@@ -179,7 +186,7 @@ export default function CarTable() {
                       <p className="font-bold text-gray-900">{car.registration}</p>
                       <p className="text-sm text-gray-700">{car.brand} {car.model}</p>
                       <p className="text-xs text-gray-500">{car.colour} • {car.engine} • {car.fuel}</p>
-                      <p className="text-xs text-gray-500">Purchase: {car.purchaseYear}</p>
+                      <p className="text-xs text-gray-500">Purchase Year: {car.purchaseYear}</p>
                     </div>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                       car.status === 'Sold'? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
@@ -187,11 +194,12 @@ export default function CarTable() {
                       {car.status}
                     </span>
                   </div>
-                  <div className="text-sm mt-2 pt-2 border-t">
-                    <p>Total Spent: £{car.totalSpent?.toLocaleString() || 0}</p>
+                  <div className="text-sm mt-2 pt-2 border-t space-y-1">
+                    <p>Spent: £{car.totalSpent?.toLocaleString() || 0}</p>
                     {car.status === 'Sold' && (
                       <>
-                        <p>Sold For: £{car.saleAmount?.toLocaleString() || 0}</p>
+                        <p>Sold: £{car.saleAmount?.toLocaleString() || 0}</p>
+                        <p>Sale Year: {car.saleYear || 'N/A'}</p>
                         <p className={`font-bold ${car.profit >= 0? 'text-green-600' : 'text-red-600'}`}>
                           Profit: £{car.profit?.toLocaleString() || 0}
                         </p>
@@ -210,31 +218,39 @@ export default function CarTable() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reg</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand/Model</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Purchase</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Spent</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profit</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reg</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand/Model</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Colour</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Engine/Fuel</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase Year</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Spent</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sold</th> {/* MOVED HERE */}
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sale Year</th> {/* MOVED HERE */}
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {cars.map(car => (
-                    <tr key={car.id}>
+                    <tr key={car.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{car.registration}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{car.brand} {car.model}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{car.colour}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{car.engine} / {car.fuel}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{car.purchaseYear}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">£{car.totalSpent?.toLocaleString() || 0}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">£{car.saleAmount?.toLocaleString() || 0}</td> {/* MOVED HERE */}
+                      <td className="px-4 py-3 text-sm text-gray-700">{car.saleYear || '-'}</td> {/* MOVED HERE */}
                       <td className="px-4 py-3 text-sm">
-                        <span className={`px-2 py-1 text-xs rounded-full ${car.status === 'Sold'? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${car.status === 'Sold'? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                           {car.status}
                         </span>
                       </td>
                       <td className={`px-4 py-3 text-sm font-bold ${car.profit >= 0? 'text-green-600' : 'text-red-600'}`}>
                         £{car.profit?.toLocaleString() || 0}
                       </td>
-                      <td className="px-4 py-3 text-sm text-right"><ActionButtons car={car} /></td>
+                      <td className="px-4 py-3 text-sm"><ActionButtons car={car} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -278,7 +294,7 @@ export default function CarTable() {
               <select
                 value={deleteReason}
                 onChange={(e) => setDeleteReason(e.target.value)}
-                className="w-full border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               >
                 <option value="Sold">Sold</option>
                 <option value="Scrapped">Scrapped</option>
@@ -287,7 +303,6 @@ export default function CarTable() {
                 <option value="Other">Other</option>
               </select>
 
-              {/* Show textbox only if Other is selected */}
               {deleteReason === 'Other' && (
                 <div className="mt-3">
                   <input
@@ -295,8 +310,8 @@ export default function CarTable() {
                     placeholder="Please specify reason..."
                     value={deleteOtherReason}
                     onChange={(e) => setDeleteOtherReason(e.target.value)}
-                    maxLength={255} // CHARACTER LIMIT
-                    className="w-full border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    maxLength={255}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     autoFocus
                   />
                   <p className="text-xs text-gray-500 mt-1 text-right">

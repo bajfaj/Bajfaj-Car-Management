@@ -24,26 +24,14 @@ export default function Sidebar({ onLinkClick }) {
       </div>
       
       <nav className="space-y-2">
-        <NavLink 
-          to="/dashboard" 
-          onClick={onLinkClick}
-          className={linkClass}
-        >
+        <NavLink to="/dashboard" onClick={onLinkClick} className={linkClass}>
           Dashboard
         </NavLink>
-        <NavLink 
-          to="/cars" 
-          onClick={onLinkClick}
-          className={linkClass}
-        >
+        <NavLink to="/cars" onClick={onLinkClick} className={linkClass}>
           Cars
         </NavLink>
-        <NavLink 
-          to="/deleted-cars" 
-          onClick={onLinkClick}
-          className={linkClass}
-        >
-          Deleted Cars
+        <NavLink to="/reports" onClick={onLinkClick} className={linkClass}>
+          Reports / Analytics
         </NavLink>
       </nav>
     </div>

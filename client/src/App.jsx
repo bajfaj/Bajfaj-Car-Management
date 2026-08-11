@@ -4,7 +4,7 @@ import Sidebar from './components/layout/Sidebar'
 import Header from './components/layout/Header'
 import Dashboard from './pages/Dashboard'
 import CarsPage from './pages/CarsPage'
-import DeletedCarsPage from './pages/DeletedCarsPage' // NEW
+import ReportsPage from './pages/ReportsPage'
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -41,10 +41,10 @@ function App() {
           
           <main className="flex-1 overflow-y-auto p-4 sm:p-6">
             <Routes>
-              <Route path="/" element={<Navigate to="/cars" replace />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/cars" element={<CarsPage />} />
-              <Route path="/deleted-cars" element={<DeletedCarsPage />} /> {/* NEW */}
+              <Route path="/reports" element={<ReportsPage />} />
             </Routes>
           </main>
         </div>

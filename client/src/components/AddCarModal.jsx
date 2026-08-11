@@ -2,23 +2,9 @@ import { useState, useEffect } from 'react'
 
 export default function AddCarModal({ isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({
-    registration: '',
-    brand: '',
-    model: '',
-    colour: '',
-    engine: '',
-    transmission: '',
-    fuel: '',
-    logbook: '',
-    purchaseYear: '',
-    source: '',
-    winningBid: '',
-    additionalFee: '',
-    delivery: '',
-    repairCost: '',
-    mechanic: '',
-    personalUse: '',
-    mileagePurchase: '',
+    registration: '', brand: '', model: '', colour: '', engine: '', transmission: '', fuel: '',
+    logbook: '', purchaseYear: '', source: '', winningBid: '', additionalFee: '', delivery: '',
+    repairCost: '', mechanic: '', personalUse: '', mileagePurchase: '',
   })
 
   const [totalSpent, setTotalSpent] = useState(0)
@@ -42,128 +28,130 @@ export default function AddCarModal({ isOpen, onClose, onSave }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     const newCar = {
-   ...formData,
-      totalSpent,
+    ...formData,
       id: Date.now(),
+      purchaseYear: Number(formData.purchaseYear),
+      winningBid: Number(formData.winningBid),
+      additionalFee: Number(formData.additionalFee),
+      delivery: Number(formData.delivery),
+      repairCost: Number(formData.repairCost),
+      mileagePurchase: Number(formData.mileagePurchase),
+      totalSpent,
       status: 'Held',
-      saleAmount: 0,
       profit: -totalSpent,
-      saleYear: null,
-      advertDuration: null,
-      advertisedOn: null,
-      platformSoldOn: null,
-      mileageSale: null,
+      saleAmount: null, saleYear: null, platformSoldOn: null,
+      advertisedOn: null, advertDuration: null, mileageSale: null,
     }
     onSave(newCar)
     onClose()
     setFormData({
-      registration: '',
-      brand: '',
-      model: '',
-      colour: '',
-      engine: '',
-      transmission: '',
-      fuel: '',
-      logbook: '',
-      purchaseYear: '',
-      source: '',
-      winningBid: '',
-      additionalFee: '',
-      delivery: '',
-      repairCost: '',
-      mechanic: '',
-      personalUse: '',
-      mileagePurchase: '',
+      registration: '', brand: '', model: '', colour: '', engine: '', transmission: '', fuel: '',
+      logbook: '', purchaseYear: '', source: '', winningBid: '', additionalFee: '', delivery: '',
+      repairCost: '', mechanic: '', personalUse: '', mileagePurchase: '',
     })
   }
 
+  // FORCE STYLES so nothing can override
+  const inputStyle = {
+    width: '100%',
+    padding: '8px 12px',
+    border: '1px solid #9ca3af', // DARKER gray-400 so you can SEE it
+    borderRadius: '6px',
+    fontSize: '14px',
+    outline: 'none',
+    boxSizing: 'border-box'
+  }
+  const labelStyle = {
+    display: 'block',
+    fontSize: '12px',
+    fontWeight: 500,
+    color: '#374151',
+    marginBottom: '4px'
+  }
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-screen flex flex-col">
-        
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
-          <h3 className="text-lg font-medium text-gray-900">Add New Car</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+    <div style={{position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', zIndex: 50}}>
+      <div style={{background: 'white', borderRadius: '8px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: '672px', maxHeight: '90vh', display: 'flex', flexDirection: 'column'}}>
+
+        <div style={{padding: '16px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0}}>
+          <h3 style={{fontSize: '18px', fontWeight: 500, color: '#111827'}}>Add New Car</h3>
+          <button onClick={onClose} style={{color: '#9ca3af', fontSize: '24px', background: 'none', border: 'none', cursor: 'pointer'}}>&times;</button>
         </div>
 
-        <div className="overflow-y-auto p-6 min-h-0">
-          <form id="add-car-form" onSubmit={handleSubmit} className="space-y-6">
+        <div style={{overflowY: 'auto', padding: '24px', minHeight: 0}}>
+          <form id="add-car-form" onSubmit={handleSubmit} style={{display: 'flex', flexDirection: 'column', gap: '24px'}}>
             <div>
-              <h4 className="text-md font-medium text-gray-900 mb-3">Car Details</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input name="registration" value={formData.registration} onChange={handleChange} placeholder="Registration e.g. AB12 CDE" required className="px-3 py-2 border border-gray-300 rounded-md" />
-                <input name="brand" value={formData.brand} onChange={handleChange} placeholder="Brand" required className="px-3 py-2 border border-gray-300 rounded-md" />
-                <input name="model" value={formData.model} onChange={handleChange} placeholder="Model" required className="px-3 py-2 border border-gray-300 rounded-md" />
-                <input name="colour" value={formData.colour} onChange={handleChange} placeholder="Colour" className="px-3 py-2 border border-gray-300 rounded-md" />
-                <input name="engine" value={formData.engine} onChange={handleChange} placeholder="Engine e.g. 1.6" className="px-3 py-2 border border-gray-300 rounded-md" />
-                
-                <select name="transmission" value={formData.transmission} onChange={handleChange} required className="px-3 py-2 border border-gray-300 rounded-md text-gray-500">
-                  <option value="" disabled>Select Transmission Type</option>
-                  <option value="MANUAL" className="text-gray-900">MANUAL</option>
-                  <option value="AUTOMATIC" className="text-gray-900">AUTOMATIC</option>
-                </select>
-                
-                <select name="fuel" value={formData.fuel} onChange={handleChange} required className="px-3 py-2 border border-gray-300 rounded-md text-gray-500">
-                  <option value="" disabled>Select Fuel Type</option>
-                  <option value="PETROL" className="text-gray-900">PETROL</option>
-                  <option value="DIESEL" className="text-gray-900">DIESEL</option>
-                  <option value="HYBRID" className="text-gray-900">HYBRID</option>
-                  <option value="ELECTRIC" className="text-gray-900">ELECTRIC</option>
-                </select>
+              <h4 style={{fontSize: '16px', fontWeight: 500, color: '#111827', marginBottom: '12px'}}>Car Details</h4>
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
+                <div>
+                  <label style={labelStyle}>Registration</label>
+                  <input name="registration" value={formData.registration} onChange={handleChange} placeholder="e.g. AB12 CDE" required style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Brand</label>
+                  <input name="brand" value={formData.brand} onChange={handleChange} placeholder="e.g. BMW" required style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Model</label>
+                  <input name="model" value={formData.model} onChange={handleChange} placeholder="e.g. 320i" required style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Colour</label>
+                  <input name="colour" value={formData.colour} onChange={handleChange} placeholder="e.g. Black" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Engine</label>
+                  <input name="engine" value={formData.engine} onChange={handleChange} placeholder="e.g. 2.0" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Transmission</label>
+                  <select name="transmission" value={formData.transmission} onChange={handleChange} style={inputStyle}>
+                    <option value="" disabled>Select transmission</option>
+                    <option value="Manual">MANUAL</option>
+                    <option value="Automatic">AUTOMATIC</option>
+                  </select>
+                </div>
+                <div style={{gridColumn: 'span 2'}}>
+                  <label style={labelStyle}>Fuel</label>
+                  <select name="fuel" value={formData.fuel} onChange={handleChange} required style={inputStyle}>
+                    <option value="" disabled>Select fuel</option>
+                    <option value="PETROL">PETROL</option>
+                    <option value="DIESEL">DIESEL</option>
+                    <option value="HYBRID">HYBRID</option>
+                    <option value="ELECTRIC">ELECTRIC</option>
+                  </select>
+                </div>
               </div>
             </div>
 
             <div>
-              <h4 className="text-md font-medium text-gray-900 mb-3">Purchase Info</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input name="purchaseYear" type="number" value={formData.purchaseYear} onChange={handleChange} placeholder="Purchase Year" required className="px-3 py-2 border border-gray-300 rounded-md" />
-                <input name="source" value={formData.source} onChange={handleChange} placeholder="Source e.g. COPART - YORK" className="px-3 py-2 border border-gray-300 rounded-md" />
-                <input name="mechanic" value={formData.mechanic} onChange={handleChange} placeholder="Mechanic" className="px-3 py-2 border border-gray-300 rounded-md" />
-                <input name="winningBid" type="number" value={formData.winningBid} onChange={handleChange} placeholder="Winning Bid" className="px-3 py-2 border border-gray-300 rounded-md" />
-                <input name="additionalFee" type="number" value={formData.additionalFee} onChange={handleChange} placeholder="Additional Fee" className="px-3 py-2 border border-gray-300 rounded-md" />
-                <input name="delivery" type="number" value={formData.delivery} onChange={handleChange} placeholder="Delivery Cost" className="px-3 py-2 border border-gray-300 rounded-md" />
-                <input name="repairCost" type="number" value={formData.repairCost} onChange={handleChange} placeholder="Repair Cost" className="px-3 py-2 border border-gray-300 rounded-md" />
-                <input name="mileagePurchase" type="number" value={formData.mileagePurchase} onChange={handleChange} placeholder="Mileage at Purchase" className="px-3 py-2 border border-gray-300 rounded-md" />
-                
-                <select name="logbook" value={formData.logbook} onChange={handleChange} required className="px-3 py-2 border border-gray-300 rounded-md text-gray-500">
-                  <option value="" disabled>Logbook Available?</option>
-                  <option value="YES" className="text-gray-900">Yes</option>
-                  <option value="NO" className="text-gray-900">No</option>
-                </select>
-
-                <select name="personalUse" value={formData.personalUse} onChange={handleChange} required className="px-3 py-2 border border-gray-300 rounded-md text-gray-500">
-                  <option value="" disabled>Personal Use?</option>
-                  <option value="YES" className="text-gray-900">Yes</option>
-                  <option value="NO" className="text-gray-900">No</option>
-                </select>
+              <h4 style={{fontSize: '16px', fontWeight: 500, color: '#111827', marginBottom: '12px'}}>Purchase Info</h4>
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
+                <div><label style={labelStyle}>Purchase Year</label><input name="purchaseYear" type="number" value={formData.purchaseYear} onChange={handleChange} placeholder="e.g. 2023" required style={inputStyle} /></div>
+                <div><label style={labelStyle}>Source</label><input name="source" value={formData.source} onChange={handleChange} placeholder="e.g. COPART - YORK" style={inputStyle} /></div>
+                <div><label style={labelStyle}>Mechanic</label><input name="mechanic" value={formData.mechanic} onChange={handleChange} placeholder="e.g. John" style={inputStyle} /></div>
+                <div><label style={labelStyle}>Winning Bid £</label><input name="winningBid" type="number" value={formData.winningBid} onChange={handleChange} placeholder="e.g. 1500" style={inputStyle} /></div>
+                <div><label style={labelStyle}>Additional Fee £</label><input name="additionalFee" type="number" value={formData.additionalFee} onChange={handleChange} placeholder="e.g. 250" style={inputStyle} /></div>
+                <div><label style={labelStyle}>Delivery Cost £</label><input name="delivery" type="number" value={formData.delivery} onChange={handleChange} placeholder="e.g. 120" style={inputStyle} /></div>
+                <div><label style={labelStyle}>Repair Cost £</label><input name="repairCost" type="number" value={formData.repairCost} onChange={handleChange} placeholder="e.g. 300" style={inputStyle} /></div>
+                <div><label style={labelStyle}>Mileage at Purchase</label><input name="mileagePurchase" type="number" value={formData.mileagePurchase} onChange={handleChange} placeholder="e.g. 80000" style={inputStyle} /></div>
+                <div><label style={labelStyle}>Logbook Available?</label><select name="logbook" value={formData.logbook} onChange={handleChange} style={inputStyle}><option value="" disabled>Select</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
+                <div><label style={labelStyle}>Personal Use?</label><select name="personalUse" value={formData.personalUse} onChange={handleChange} style={inputStyle}><option value="" disabled>Select</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
               </div>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-md">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-700">Total Amount Spent:</span>
-                <span className="text-xl font-bold text-gray-900">£{totalSpent.toLocaleString()}</span>
+            <div style={{background: '#f9fafb', padding: '16px', borderRadius: '6px', border: '1px solid #e5e7eb'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <span style={{fontSize: '14px', fontWeight: 500, color: '#374151'}}>Total Amount Spent:</span>
+                <span style={{fontSize: '14px', fontWeight: 'bold', color: '#111827'}}>£{totalSpent.toLocaleString()}</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Auto: Bid + Fee + Delivery + Repair</p>
             </div>
           </form>
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0">
-          <button 
-            type="button" 
-            onClick={onClose} 
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button 
-            type="submit" 
-            form="add-car-form"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-          >
-            Save Car
-          </button>
+        <div style={{padding: '16px 24px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: '12px', flexShrink: 0}}>
+          <button type="button" onClick={onClose} style={{padding: '8px 16px', fontSize: '14px', fontWeight: 500, color: '#374151', background: 'white', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer'}}>Cancel</button>
+          <button type="submit" form="add-car-form" style={{padding: '8px 16px', fontSize: '14px', fontWeight: 500, color: 'white', background: '#2563eb', border: '1px solid transparent', borderRadius: '6px', cursor: 'pointer'}}>Save Car</button>
         </div>
 
       </div>
