@@ -2,50 +2,55 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 1. Get which environment we are in. Defaults to development
-const env = process.env.NODE_ENV || 'development';
+// --- STRICT VALIDATION - NO FALLBACK ---
+const allowedEnvs = ['development', 'test', 'production'];
+const env = process.env.NODE_ENV;
 
-// 2. Map env to the EXACT 3 DB files we want
-const dbMap = {
-  development: 'bajfaj_dev.db',
-  test: 'bajfaj_test.db',
-  production: 'bajfaj_prod.db'
-};
-
-const dbFileName = dbMap[env];
-
-if (!dbFileName) {
-  throw new Error(`Invalid NODE_ENV: ${env}. Must be one of: development, test, production`);
+if (!env) {
+  throw new Error(`[FATAL] NODE_ENV is not set. Must be: ${allowedEnvs.join(', ')}`);
+}
+if (!allowedEnvs.includes(env)) {
+  throw new Error(`[FATAL] Invalid NODE_ENV '${env}'. Allowed: ${allowedEnvs.join(', ')}`);
 }
 
-const dbPath = path.join(__dirname, 'data', dbFileName);
+const envPath = path.join(__dirname, 'env', `.env.${env}`);
+if (!fs.existsSync(envPath)) {
+  throw new Error(`[FATAL] Env file not found: ${envPath}`);
+}
+dotenv.config({ path: envPath });
 
-// 3. Ensure data folder exists
+if (!process.env.DATABASE_URL) {
+  throw new Error(`[FATAL] DATABASE_URL missing in ${envPath}`);
+}
+
+const DB_PATH = process.env.DATABASE_URL;
+const dbPath = path.isAbsolute(DB_PATH) ? DB_PATH : path.join(__dirname, DB_PATH);
+
 const dataDir = path.dirname(dbPath);
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-// 4. Log which DB we are connecting to
-console.log(`[DB] Connecting to: ${dbPath} | Mode: ${env}`);
+console.log(`[DB] Strict mode - Connecting to: ${dbPath} | Mode: ${env}`);
 
-// 5. Connect to SQLite
 const sqlite = sqlite3.verbose();
 const db = new sqlite.Database(dbPath, (err) => {
   if (err) {
-    console.error('Error opening database', err.message);
+    console.error('[FATAL] Error opening database', err.message, 'path:', dbPath);
+    process.exit(1);
   } else {
-    console.log('Connected to SQLite database');
-
-    // 6. Create table if not exists - FULL 31 COLUMNS
+    console.log('[DB] Connected to SQLite database');
+    
+    // FULL 31 COLUMNS - table creation
     db.run(`
       CREATE TABLE IF NOT EXISTS cars (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        registration TEXT UNIQUE NOT NULL,
+        registration TEXT,
         make TEXT,
         model TEXT,
         colour TEXT,
@@ -61,8 +66,8 @@ const db = new sqlite.Database(dbPath, (err) => {
         delivery REAL,
         repairCost REAL,
         mechanic TEXT,
-        personalUse INTEGER,
-        mileage TEXT,
+        personalUse TEXT,
+        mileage INTEGER,
         mileagePurchase INTEGER,
         mileageSale INTEGER,
         totalSpent REAL,
@@ -72,14 +77,16 @@ const db = new sqlite.Database(dbPath, (err) => {
         saleYear INTEGER,
         platformSoldOn TEXT,
         advertisedPlatforms TEXT,
-        advertDuration INTEGER,
+        advertDuration TEXT,
         deleted INTEGER DEFAULT 0,
         deleted_at TEXT,
-        deleted_reason TEXT
+        deleted_reason TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `, (err) => {
       if (err) {
-        console.error('[DB] Error creating table:', err.message);
+        console.error('[FATAL] Error creating table:', err.message);
+        process.exit(1);
       } else {
         console.log('[DB] Table cars ready with 31 columns');
       }

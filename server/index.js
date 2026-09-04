@@ -9,12 +9,36 @@ import sqlite3 from 'sqlite3';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
-dotenv.config({ path: path.join(__dirname, '..', envFile) });
+// --- STRICT VALIDATION ---
+const allowedEnvs = ['development', 'test', 'production'];
+const env = process.env.NODE_ENV;
+
+if (!env) {
+  throw new Error(`[FATAL] NODE_ENV is not set. Use: development | test | production`);
+}
+if (!allowedEnvs.includes(env)) {
+  throw new Error(`[FATAL] Invalid NODE_ENV '${env}'. Must be one of: ${allowedEnvs.join(', ')}`);
+}
+
+const envPath = path.join(__dirname, 'env', `.env.${env}`);
+
+if (!fs.existsSync(envPath)) {
+  throw new Error(`[FATAL] Env file not found: ${envPath}`);
+}
+
+dotenv.config({ path: envPath });
+console.log(`[ENV] Loaded ${envPath}`);
+
+if (!process.env.PORT) {
+  throw new Error(`[FATAL] PORT missing in ${envPath}`);
+}
+if (!process.env.DATABASE_URL) {
+  throw new Error(`[FATAL] DATABASE_URL missing in ${envPath}`);
+}
 
 const app = express();
-const PORT = process.env.PORT || 3001;
-const DB_PATH = process.env.DATABASE_URL || './server/data/bajfaj_dev.db';
+const PORT = process.env.PORT;
+const DB_PATH = process.env.DATABASE_URL;
 
 app.use(cors());
 app.use(express.json());
@@ -24,13 +48,15 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-const dbPath = path.isAbsolute(DB_PATH) ? DB_PATH : path.join(__dirname, '..', DB_PATH);
+const dbPath = path.isAbsolute(DB_PATH) ? DB_PATH : path.join(__dirname, DB_PATH);
+
 sqlite3.verbose();
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error('Error opening database:', err.message, 'path:', dbPath);
+    console.error('[FATAL] Error opening database:', err.message, 'path:', dbPath);
+    process.exit(1);
   } else {
-    console.log(`[${process.env.NODE_ENV}] Connected to SQLite at`, dbPath, `on PORT ${PORT}`);
+    console.log(`[${env}] Connected to SQLite at`, dbPath, `on PORT ${PORT}`);
     initDb();
   }
 });
@@ -71,7 +97,10 @@ function initDb() {
     deleted_reason TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`, (err) => {
-    if (err) console.error('Error creating table:', err.message);
+    if (err) {
+      console.error('[FATAL] Error creating table:', err.message);
+      process.exit(1);
+    }
     else console.log('Cars table now ready');
   });
 }
@@ -94,10 +123,8 @@ app.post('/api/cars', (req, res) => {
   const c = req.body;
   if (c.advertisedOn && !c.advertisedPlatforms) c.advertisedPlatforms = c.advertisedOn;
   delete c.advertisedOn;
-
   const totalSpent = (Number(c.winningBid)||0)+(Number(c.additionalFee)||0)+(Number(c.delivery)||0)+(Number(c.repairCost)||0);
   const profit = c.status === 'Sold' ? (Number(c.saleAmount)-totalSpent) : -totalSpent;
-
   const sql = `INSERT INTO cars (registration, make, model, colour, engine, engineSize, transmission, fuel, logbook, purchaseYear, source, winningBid, additionalFee, delivery, repairCost, mechanic, personalUse, mileage, mileagePurchase, mileageSale, totalSpent, status, profit, saleAmount, saleYear, platformSoldOn, advertisedPlatforms, advertDuration) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
   const params = [c.registration,c.make,c.model,c.colour,c.engine,c.engineSize||'',c.transmission,c.fuel,c.logbook,c.purchaseYear,c.source,c.winningBid,c.additionalFee,c.delivery,c.repairCost,c.mechanic,c.personalUse,c.mileage||c.mileagePurchase,c.mileagePurchase,c.mileageSale,totalSpent,c.status||'Held',profit,c.saleAmount,c.saleYear,c.platformSoldOn,c.advertisedPlatforms,c.advertDuration];
   db.run(sql, params, function(err){
@@ -111,17 +138,14 @@ app.put('/api/cars/:id', (req, res) => {
   const c = { ...req.body };
   if (c.advertisedOn && !c.advertisedPlatforms) c.advertisedPlatforms = c.advertisedOn;
   delete c.advertisedOn;
-
   const totalSpent = (Number(c.winningBid)||0)+(Number(c.additionalFee)||0)+(Number(c.delivery)||0)+(Number(c.repairCost)||0);
   c.totalSpent = totalSpent;
   c.profit = c.status === 'Sold' ? (Number(c.saleAmount)-totalSpent) : -totalSpent;
-
   const allowed = ['registration','make','model','colour','engine','engineSize','transmission','fuel','logbook','purchaseYear','source','winningBid','additionalFee','delivery','repairCost','mechanic','personalUse','mileage','mileagePurchase','mileageSale','totalSpent','status','profit','saleAmount','saleYear','platformSoldOn','advertisedPlatforms','advertDuration','deleted','deleted_at','deleted_reason'];
   const keys = Object.keys(c).filter(k => k!=='id' && allowed.includes(k));
   const values = keys.map(k => c[k]);
   const setClause = keys.map(k => `${k} =?`).join(', ');
   if (!keys.length) return res.status(400).json({error:'No valid fields'});
-
   db.run(`UPDATE cars SET ${setClause} WHERE id =?`, [...values, id], function(err){
     if (err) { console.error('SQL ERROR PUT:', err.message); return res.status(500).json({error: err.message}); }
     res.json({ success: true });
@@ -152,5 +176,5 @@ app.delete('/api/cars/:id/permanent', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server [${process.env.NODE_ENV}] running on http://localhost:${PORT}`);
+  console.log(`Server [${env}] running on http://localhost:${PORT}`);
 });

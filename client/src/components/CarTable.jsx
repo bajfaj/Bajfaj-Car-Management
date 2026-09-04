@@ -5,7 +5,7 @@ import SellCarModal from './SellCarModal'
 import EditCarModal from './EditCarModal'
 import ViewCarModal from './ViewCarModal'
 
-const API_URL = 'http://localhost:3001/api/cars'
+const API_URL = '/api/cars'
 const TABS = ['All', 'Held', 'Sold', 'Deleted']
 
 export default function CarTable() {
