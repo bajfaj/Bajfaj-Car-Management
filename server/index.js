@@ -1,151 +1,156 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config(); // load.env for local
-const db = require('./database');
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+import express from 'express';
+import cors from 'cors';
+import sqlite3 from 'sqlite3';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
+dotenv.config({ path: path.join(__dirname, '..', envFile) });
 
 const app = express();
+const PORT = process.env.PORT || 3001;
+const DB_PATH = process.env.DATABASE_URL || './server/data/bajfaj_dev.db';
+
 app.use(cors());
 app.use(express.json());
 
-// Helper to map DB row to frontend format
-const mapCar = (r) => ({
-  id: r.id,
-  registration: r.registration,
-  brand: r.make,
-  model: r.model,
-  colour: r.colour,
-  engine: r.engine,
-  transmission: r.transmission,
-  fuel: r.fuel,
-  logbook: r.logbook,
-  purchaseYear: r.purchase_year,
-  source: r.source,
-  winningBid: r.winning_bid,
-  additionalFee: r.additional_fee,
-  delivery: r.delivery,
-  repairCost: r.repair_cost,
-  mechanic: r.mechanic,
-  personalUse: r.personal_use,
-  mileagePurchase: r.mileage_purchase,
-  totalSpent: r.total_amount_spent,
-  status: r.status,
-  saleAmount: r.sale_price,
-  saleYear: r.sale_year,
-  platformSoldOn: r.platform_sold_on,
-  advertisedOn: r.advertised_on,
-  advertDuration: r.advert_duration,
-  mileageSale: r.mileage_sale,
-  profit: r.profit_loss,
-  deleted_reason: r.deleted_reason,
-  deleted_at: r.deleted_at
-});
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
 
-// GET all ACTIVE cars
-app.get('/api/cars', async (req, res) => {
-  try {
-    const rows = await db.query('SELECT * FROM cars WHERE deleted_at IS NULL ORDER BY id DESC', []);
-    res.json(rows.map(mapCar));
-  } catch (err) {
-    console.error("GET /api/cars error:", err.message);
-    res.status(500).json({ error: err.message });
+const dbPath = path.isAbsolute(DB_PATH) ? DB_PATH : path.join(__dirname, '..', DB_PATH);
+sqlite3.verbose();
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('Error opening database:', err.message, 'path:', dbPath);
+  } else {
+    console.log(`[${process.env.NODE_ENV}] Connected to SQLite at`, dbPath, `on PORT ${PORT}`);
+    initDb();
   }
 });
 
-// GET DELETED cars
-app.get('/api/cars/deleted', async (req, res) => {
-  try {
-    const rows = await db.query('SELECT * FROM cars WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC', []);
-    res.json(rows.map(mapCar));
-  } catch (err) {
-    console.error("GET /api/cars/deleted error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
+function initDb() {
+  db.run(`CREATE TABLE IF NOT EXISTS cars (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    registration TEXT,
+    make TEXT,
+    model TEXT,
+    colour TEXT,
+    engine TEXT,
+    engineSize TEXT,
+    transmission TEXT,
+    fuel TEXT,
+    logbook TEXT,
+    purchaseYear INTEGER,
+    source TEXT,
+    winningBid REAL,
+    additionalFee REAL,
+    delivery REAL,
+    repairCost REAL,
+    mechanic TEXT,
+    personalUse TEXT,
+    mileage INTEGER,
+    mileagePurchase INTEGER,
+    mileageSale INTEGER,
+    totalSpent REAL,
+    status TEXT DEFAULT 'Held',
+    profit REAL,
+    saleAmount REAL,
+    saleYear INTEGER,
+    platformSoldOn TEXT,
+    advertisedPlatforms TEXT,
+    advertDuration TEXT,
+    deleted INTEGER DEFAULT 0,
+    deleted_at TEXT,
+    deleted_reason TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`, (err) => {
+    if (err) console.error('Error creating table:', err.message);
+    else console.log('Cars table now ready');
+  });
+}
+
+app.get('/api/cars', (req, res) => {
+  db.all('SELECT * FROM cars WHERE deleted = 0 OR deleted IS NULL ORDER BY id DESC', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
 });
 
-// POST new car
-app.post('/api/cars', async (req, res) => {
+app.get('/api/cars/deleted', (req, res) => {
+  db.all('SELECT * FROM cars WHERE deleted = 1 ORDER BY deleted_at DESC', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+app.post('/api/cars', (req, res) => {
   const c = req.body;
-  // FIXED: 20 columns = 20?
-  const sql = `INSERT INTO cars (registration, make, model, colour, engine, transmission, fuel, logbook, purchase_year, source, winning_bid, additional_fee, delivery, repair_cost, mechanic, personal_use, mileage_purchase, total_amount_spent, status, profit_loss)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
-  const params = [c.registration, c.brand, c.model, c.colour, c.engine, c.transmission, c.fuel, c.logbook, c.purchaseYear, c.source, c.winningBid, c.additionalFee, c.delivery, c.repairCost, c.mechanic, c.personalUse, c.mileagePurchase, c.totalSpent, c.status, c.profit];
-  
-  try {
-    const result = await db.run(sql, params);
-    res.json({ id: result.lastID,...c });
-  } catch (err) {
-    console.error("POST /api/cars error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
+  if (c.advertisedOn && !c.advertisedPlatforms) c.advertisedPlatforms = c.advertisedOn;
+  delete c.advertisedOn;
+
+  const totalSpent = (Number(c.winningBid)||0)+(Number(c.additionalFee)||0)+(Number(c.delivery)||0)+(Number(c.repairCost)||0);
+  const profit = c.status === 'Sold' ? (Number(c.saleAmount)-totalSpent) : -totalSpent;
+
+  const sql = `INSERT INTO cars (registration, make, model, colour, engine, engineSize, transmission, fuel, logbook, purchaseYear, source, winningBid, additionalFee, delivery, repairCost, mechanic, personalUse, mileage, mileagePurchase, mileageSale, totalSpent, status, profit, saleAmount, saleYear, platformSoldOn, advertisedPlatforms, advertDuration) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+  const params = [c.registration,c.make,c.model,c.colour,c.engine,c.engineSize||'',c.transmission,c.fuel,c.logbook,c.purchaseYear,c.source,c.winningBid,c.additionalFee,c.delivery,c.repairCost,c.mechanic,c.personalUse,c.mileage||c.mileagePurchase,c.mileagePurchase,c.mileageSale,totalSpent,c.status||'Held',profit,c.saleAmount,c.saleYear,c.platformSoldOn,c.advertisedPlatforms,c.advertDuration];
+  db.run(sql, params, function(err){
+    if (err) { console.error('SQL ERROR POST:', err.message); return res.status(500).json({error: err.message}); }
+    res.json({ id: this.lastID, ...c, totalSpent, profit });
+  });
 });
 
-// PUT update car
-app.put('/api/cars/:id', async (req, res) => {
+app.put('/api/cars/:id', (req, res) => {
   const { id } = req.params;
-  const c = req.body;
-  const sql = `UPDATE cars SET registration=?, make=?, model=?, colour=?, engine=?, transmission=?, fuel=?, logbook=?, purchase_year=?, source=?, winning_bid=?, additional_fee=?, delivery=?, repair_cost=?, mechanic=?, personal_use=?, mileage_purchase=?, total_amount_spent=?, status=?, sale_price=?, sale_year=?, platform_sold_on=?, advertised_on=?, advert_duration=?, mileage_sale=?, profit_loss=? WHERE id=?`;
-  const params = [c.registration, c.brand, c.model, c.colour, c.engine, c.transmission, c.fuel, c.logbook, c.purchaseYear, c.source, c.winningBid, c.additionalFee, c.delivery, c.repairCost, c.mechanic, c.personalUse, c.mileagePurchase, c.totalSpent, c.status, c.saleAmount, c.saleYear, c.platformSoldOn, c.advertisedOn, c.advertDuration, c.mileageSale, c.profit, id];
-  
-  try {
-    await db.run(sql, params);
-    res.json({ id,...c });
-  } catch (err) {
-    console.error("PUT /api/cars/:id error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
+  const c = { ...req.body };
+  if (c.advertisedOn && !c.advertisedPlatforms) c.advertisedPlatforms = c.advertisedOn;
+  delete c.advertisedOn;
+
+  const totalSpent = (Number(c.winningBid)||0)+(Number(c.additionalFee)||0)+(Number(c.delivery)||0)+(Number(c.repairCost)||0);
+  c.totalSpent = totalSpent;
+  c.profit = c.status === 'Sold' ? (Number(c.saleAmount)-totalSpent) : -totalSpent;
+
+  const allowed = ['registration','make','model','colour','engine','engineSize','transmission','fuel','logbook','purchaseYear','source','winningBid','additionalFee','delivery','repairCost','mechanic','personalUse','mileage','mileagePurchase','mileageSale','totalSpent','status','profit','saleAmount','saleYear','platformSoldOn','advertisedPlatforms','advertDuration','deleted','deleted_at','deleted_reason'];
+  const keys = Object.keys(c).filter(k => k!=='id' && allowed.includes(k));
+  const values = keys.map(k => c[k]);
+  const setClause = keys.map(k => `${k} =?`).join(', ');
+  if (!keys.length) return res.status(400).json({error:'No valid fields'});
+
+  db.run(`UPDATE cars SET ${setClause} WHERE id =?`, [...values, id], function(err){
+    if (err) { console.error('SQL ERROR PUT:', err.message); return res.status(500).json({error: err.message}); }
+    res.json({ success: true });
+  });
 });
 
-// SOFT DELETE CAR
-app.delete('/api/cars/:id', async (req, res) => {
+app.delete('/api/cars/:id', (req, res) => {
   const { id } = req.params;
-  const { reason } = req.body;
-
-  try {
-    const carArr = await db.query("SELECT * FROM cars WHERE id =?", [id]);
-    const car = carArr[0];
-    if (!car) return res.status(404).json({ error: "Car not found" });
-
-    // FIXED: datetime('now') only works in SQLite. NOW() works for MySQL. This works for both via JS
-    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    
-    await db.run("UPDATE cars SET deleted_at =?, deleted_reason =? WHERE id =?",
-      [now, reason || 'Deleted', id]
-    );
-    
-    await db.run("INSERT INTO audit_log (car_id, action, old_data) VALUES (?,?,?)",
-      [id, 'SOFT_DELETE', JSON.stringify(car)]
-    );
-    
-    res.json({ success: true, message: "Car deleted" });
-  } catch (err) {
-    console.error("DELETE error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
+  const { reason } = req.body || {};
+  db.run('UPDATE cars SET deleted = 1, deleted_at = CURRENT_TIMESTAMP, deleted_reason =? WHERE id =?', [reason||'', id], function(err){
+    if (err) return res.status(500).json({error: err.message});
+    res.json({ success: true });
+  });
 });
 
-// RESTORE car
-app.put('/api/cars/:id/restore', async (req, res) => {
-  const { id } = req.params;
-  try {
-    await db.run("UPDATE cars SET deleted_at = NULL, deleted_reason = NULL WHERE id =?", [id]);
-    res.json({ success: true, message: "Car restored" });
-  } catch (err) {
-    console.error("RESTORE error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
+app.put('/api/cars/:id/restore', (req, res) => {
+  db.run('UPDATE cars SET deleted = 0, deleted_at = NULL, deleted_reason = NULL WHERE id =?', [req.params.id], function(err){
+    if (err) return res.status(500).json({error: err.message});
+    res.json({ success: true });
+  });
 });
 
-// PERMANENT DELETE car
-app.delete('/api/cars/:id/permanent', async (req, res) => {
-  const { id } = req.params;
-  try {
-    await db.run("DELETE FROM cars WHERE id =?", [id]);
-    res.json({ success: true, message: "Car permanently deleted" });
-  } catch (err) {
-    console.error("PERMANENT DELETE error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
+app.delete('/api/cars/:id/permanent', (req, res) => {
+  db.run('DELETE FROM cars WHERE id =?', [req.params.id], function(err){
+    if (err) return res.status(500).json({error: err.message});
+    res.json({ success: true });
+  });
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server [${process.env.NODE_ENV}] running on http://localhost:${PORT}`);
+});

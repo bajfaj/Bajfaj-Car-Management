@@ -18,7 +18,7 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
   useEffect(() => {
     if (!car) return
     const sale = Number(formData.saleAmount) || 0
-    setProfit(sale - (car.totalSpent || 0))
+    setProfit(sale - (car.totalSpent || 0)) // <-- totalSpent matches DB now
   }, [formData.saleAmount, car])
 
   if (!isOpen ||!car) return null
@@ -31,7 +31,7 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
   const handleCheckboxChange = (platform) => {
     setFormData(prev => {
       const platforms = prev.advertisedPlatforms.includes(platform)
-     ? prev.advertisedPlatforms.filter(p => p!== platform)
+   ? prev.advertisedPlatforms.filter(p => p!== platform)
         : [...prev.advertisedPlatforms, platform]
       return {...prev, advertisedPlatforms: platforms }
     })
@@ -51,17 +51,21 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
       return
     }
 
+    // FIXED: Use advertisedPlatforms for DB and don't send array twice
+    const { advertisedPlatforms: selectedPlatforms,...restFormData } = formData;
+
     const updatedCar = {
-   ...car,
-   ...formData,
-      saleAmount: Number(formData.saleAmount),
+     ...car,
+     ...restFormData,
+      saleAmount: Number(formData.saleAmount), // <-- saleAmount matches DB
       mileageSale: Number(formData.mileageSale) || 0,
-      saleYear: Number(formData.saleYear),
-      advertisedOn: formData.advertisedPlatforms.join(', '), // FIX: Match API field name
-      profit,
+      saleYear: Number(formData.saleYear), // <-- saleYear matches DB
+      advertisedPlatforms: selectedPlatforms.join(', '), // FIXED: was advertisedOn, now advertisedPlatforms
+      profit, // <-- profit matches DB
       status: 'Sold',
     }
-    onSave(updatedCar)
+
+    onSave(updatedCar) // PESSIMISTIC: parent will refetch
     onClose()
     setFormData({
       saleAmount: '',
@@ -75,13 +79,13 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-screen flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-screen flex-col">
 
         {/* Header - Fixed */}
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
           <div>
             <h3 className="text-lg font-medium text-gray-900">Mark as Sold</h3>
-            <p className="text-sm text-gray-500">{car.registration} - {car.brand} {car.model}</p>
+            <p className="text-sm text-gray-500">{car.registration} - {car.make} {car.model}</p> {/* <-- make */}
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
         </div>
@@ -100,7 +104,7 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
                   onChange={handleChange}
                   placeholder="e.g. 2500"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border-gray-300 rounded-md"
                 />
               </div>
               <div>
@@ -138,7 +142,7 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
                   value={formData.mileageSale}
                   onChange={handleChange}
                   placeholder="e.g. 85000"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border-gray-300 rounded-md"
                 />
               </div>
               <div className="md:col-span-2">
@@ -176,7 +180,7 @@ export default function SellCarModal({ isOpen, onClose, onSave, car }) {
             <div className="bg-gray-50 p-4 rounded-md space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-700">Total Spent:</span>
-                <span className="text-sm font-medium text-gray-900">£{car.totalSpent?.toLocaleString() || 0}</span>
+                <span className="text-sm font-medium text-gray-900">£{car.totalSpent?.toLocaleString() || 0}</span> {/* <-- totalSpent */}
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-700">Sale Amount:</span>

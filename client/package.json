@@ -2,13 +2,16 @@
   "name": "bajfaj-car-management",
   "private": true,
   "version": "0.0.0",
-  "proxy": "http://localhost:3001",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --mode development",
+    "test": "vite --mode test",
     "build": "vite build",
+    "build:test": "vite build --mode test",
+    "build:prod": "vite build --mode production",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview --mode production",
+    "preview:test": "vite preview --mode test"
   },
   "dependencies": {
     "axios": "^1.19.0",

@@ -12,7 +12,7 @@ export default function ViewCarModal({ isOpen, onClose, car }) {
         <div className="px-6 py-4 border-b flex justify-between items-center">
           <div>
             <h3 className="text-lg font-medium text-gray-900">Car Details</h3>
-            <p className="text-sm text-gray-500">{car.registration} - {car.brand} {car.model}</p>
+            <p className="text-sm text-gray-500">{car.registration} - {car.make} {car.model}</p> {/* <-- make */}
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
         </div>
@@ -22,11 +22,11 @@ export default function ViewCarModal({ isOpen, onClose, car }) {
           <div>
             <h4 className="font-semibold mb-3 text-gray-900 border-b pb-2">Purchase Information</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-              <p><span className="text-gray-500">Brand/Model:</span> <span className="font-medium">{car.brand} {car.model}</span></p>
+              <p><span className="text-gray-500">Make/Model:</span> <span className="font-medium">{car.make} {car.model}</span></p> {/* <-- make */}
               <p><span className="text-gray-500">Colour:</span> <span className="font-medium">{car.colour}</span></p>
               <p><span className="text-gray-500">Engine/Fuel:</span> <span className="font-medium">{car.engine} / {car.fuel}</span></p>
               <p><span className="text-gray-500">Transmission:</span> <span className="font-medium">{car.transmission}</span></p>
-              <p><span className="text-gray-500">Purchase Year:</span> <span className="font-medium">{car.purchaseYear}</span></p>
+              <p><span className="text-gray-500">Purchase Year:</span> <span className="font-medium">{car.purchaseYear}</span></p> {/* <-- purchaseYear */}
               <p><span className="text-gray-500">Source:</span> <span className="font-medium">{car.source}</span></p>
               <p><span className="text-gray-500">Mechanic:</span> <span className="font-medium">{car.mechanic}</span></p>
               <p><span className="text-gray-500">Logbook:</span> <span className="font-medium">{car.logbook}</span></p>
@@ -36,7 +36,7 @@ export default function ViewCarModal({ isOpen, onClose, car }) {
               <p><span className="text-gray-500">Additional Fee:</span> <span className="font-medium">{formatCurrency(car.additionalFee)}</span></p>
               <p><span className="text-gray-500">Delivery:</span> <span className="font-medium">{formatCurrency(car.delivery)}</span></p>
               <p><span className="text-gray-500">Repair Cost:</span> <span className="font-medium">{formatCurrency(car.repairCost)}</span></p>
-              <p className="md:col-span-2 pt-2 border-t font-bold text-base"><span className="text-gray-500">Total Spent:</span> <span>{formatCurrency(car.totalSpent)}</span></p>
+              <p className="md:col-span-2 pt-2 border-t font-bold text-base"><span className="text-gray-500">Total Spent:</span> <span>{formatCurrency(car.totalSpent)}</span></p> {/* <-- totalSpent */}
             </div>
           </div>
 
@@ -45,15 +45,15 @@ export default function ViewCarModal({ isOpen, onClose, car }) {
             <div>
               <h4 className="font-semibold mb-3 text-gray-900 border-b pb-2">Sale Information</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                <p><span className="text-gray-500">Sale Amount:</span> <span className="font-medium">{formatCurrency(car.saleAmount)}</span></p>
-                <p><span className="text-gray-500">Sale Year:</span> <span className="font-medium">{car.saleYear}</span></p>
+                <p><span className="text-gray-500">Sale Amount:</span> <span className="font-medium">{formatCurrency(car.saleAmount)}</span></p> {/* <-- saleAmount */}
+                <p><span className="text-gray-500">Sale Year:</span> <span className="font-medium">{car.saleYear}</span></p> {/* <-- saleYear */}
                 <p><span className="text-gray-500">Platform Sold On:</span> <span className="font-medium">{car.platformSoldOn}</span></p>
-                <p><span className="text-gray-500">Advertised On:</span> <span className="font-medium">{car.advertisedOn}</span></p>
+                <p><span className="text-gray-500">Advertised Platforms:</span> <span className="font-medium">{car.advertisedPlatforms}</span></p>
                 <p><span className="text-gray-500">Advert Duration:</span> <span className="font-medium">{car.advertDuration}</span></p>
                 <p><span className="text-gray-500">Mileage at Sale:</span> <span className="font-medium">{car.mileageSale?.toLocaleString()}</span></p>
                 <p className="md:col-span-2 pt-2 border-t font-bold text-lg">
                   <span className="text-gray-500">Profit:</span> 
-                  <span className={car.profit >= 0? 'text-green-600' : 'text-red-600'}> {formatCurrency(car.profit)}</span>
+                  <span className={car.profit >= 0? 'text-green-600' : 'text-red-600'}> {formatCurrency(car.profit)}</span> {/* <-- profit */}
                 </p>
               </div>
             </div>

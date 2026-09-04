@@ -1,51 +1,90 @@
-const path = require('path');
-require('dotenv').config();
+import sqlite3 from 'sqlite3';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-let db;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-if (process.env.DB_HOST) {
-  // RAILWAY = MySQL
-  const mysql = require('mysql2/promise');
-  const pool = mysql.createPool({
-    host: process.env.DB_HOST, user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD, database: process.env.DB_NAME,
-    waitForConnections: true, connectionLimit: 10,
-  });
-  
-  db = {
-    query: async (sql, params) => {
-      const [rows] = await pool.query(sql, params);
-      return rows;
-    },
-    run: async (sql, params) => { // for INSERT/UPDATE/DELETE
-      const [result] = await pool.query(sql, params);
-      return { lastID: result.insertId, changes: result.affectedRows };
-    }
-  };
-  console.log("Connected to MySQL");
-  // run createTablesMySQL here...
+// 1. Get which environment we are in. Defaults to development
+const env = process.env.NODE_ENV || 'development';
 
-} else {
-  // LOCAL = SQLite
-  const sqlite3 = require('sqlite3').verbose();
-  const sqliteDb = new sqlite3.Database(path.join(__dirname, 'cars.db'));
-  
-  db = {
-    query: (sql, params) => { // for SELECT
-      return new Promise((resolve, reject) => {
-        sqliteDb.all(sql, params, (err, rows) => err? reject(err) : resolve(rows));
-      });
-    },
-    run: (sql, params) => { // for INSERT/UPDATE/DELETE
-      return new Promise((resolve, reject) => {
-        sqliteDb.run(sql, params, function(err) {
-          err? reject(err) : resolve({ lastID: this.lastID, changes: this.changes });
-        });
-      });
-    }
-  };
-  console.log("Connected to SQLite");
-  // run createTablesSQLite here...
+// 2. Map env to the EXACT 3 DB files we want
+const dbMap = {
+  development: 'bajfaj_dev.db',
+  test: 'bajfaj_test.db',
+  production: 'bajfaj_prod.db'
+};
+
+const dbFileName = dbMap[env];
+
+if (!dbFileName) {
+  throw new Error(`Invalid NODE_ENV: ${env}. Must be one of: development, test, production`);
 }
 
-module.exports = db;
+const dbPath = path.join(__dirname, 'data', dbFileName);
+
+// 3. Ensure data folder exists
+const dataDir = path.dirname(dbPath);
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// 4. Log which DB we are connecting to
+console.log(`[DB] Connecting to: ${dbPath} | Mode: ${env}`);
+
+// 5. Connect to SQLite
+const sqlite = sqlite3.verbose();
+const db = new sqlite.Database(dbPath, (err) => {
+  if (err) {
+    console.error('Error opening database', err.message);
+  } else {
+    console.log('Connected to SQLite database');
+
+    // 6. Create table if not exists - FULL 31 COLUMNS
+    db.run(`
+      CREATE TABLE IF NOT EXISTS cars (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        registration TEXT UNIQUE NOT NULL,
+        make TEXT,
+        model TEXT,
+        colour TEXT,
+        engine TEXT,
+        engineSize TEXT,
+        transmission TEXT,
+        fuel TEXT,
+        logbook TEXT,
+        purchaseYear INTEGER,
+        source TEXT,
+        winningBid REAL,
+        additionalFee REAL,
+        delivery REAL,
+        repairCost REAL,
+        mechanic TEXT,
+        personalUse INTEGER,
+        mileage TEXT,
+        mileagePurchase INTEGER,
+        mileageSale INTEGER,
+        totalSpent REAL,
+        status TEXT DEFAULT 'Held',
+        profit REAL,
+        saleAmount REAL,
+        saleYear INTEGER,
+        platformSoldOn TEXT,
+        advertisedPlatforms TEXT,
+        advertDuration INTEGER,
+        deleted INTEGER DEFAULT 0,
+        deleted_at TEXT,
+        deleted_reason TEXT
+      )
+    `, (err) => {
+      if (err) {
+        console.error('[DB] Error creating table:', err.message);
+      } else {
+        console.log('[DB] Table cars ready with 31 columns');
+      }
+    });
+  }
+});
+
+export default db;

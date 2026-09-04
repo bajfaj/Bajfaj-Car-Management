@@ -5,20 +5,22 @@ export default function EditCarModal({ isOpen, onClose, onSave, car }) {
   const [totalSpent, setTotalSpent] = useState(0)
   const [error, setError] = useState('')
 
-  const isSold = car?.status?.toLowerCase().trim() === 'sold' // FIX 1: case-insensitive
+  const isSold = car?.status?.toLowerCase().trim() === 'sold'
 
   useEffect(() => {
     if (car) {
       setFormData({
-        registration: car.registration || '', brand: car.brand || '', model: car.model || '',
+        registration: car.registration || '', make: car.make || '', model: car.model || '',
         colour: car.colour || '', engine: car.engine || '', transmission: car.transmission || '',
         fuel: car.fuel || '', logbook: car.logbook || '', purchaseYear: car.purchaseYear || '',
         source: car.source || '', winningBid: car.winningBid || '', additionalFee: car.additionalFee || '',
         delivery: car.delivery || '', repairCost: car.repairCost || '', mechanic: car.mechanic || '',
         personalUse: car.personalUse || '', mileagePurchase: car.mileagePurchase || '',
         saleAmount: car.saleAmount || '', saleYear: car.saleYear || '',
-        platformSoldOn: car.platformSoldOn || '', advertisedOn: car.advertisedOn || '',
-        advertDuration: car.advertDuration || '', mileageSale: car.mileageSale || ''
+        platformSoldOn: car.platformSoldOn || '',
+        advertisedPlatforms: car.advertisedPlatforms || car.advertisedOn || '',
+        advertDuration: car.advertDuration || '',
+        mileageSale: car.mileageSale || ''
       })
       const bid = Number(car.winningBid) || 0
       const fee = Number(car.additionalFee) || 0
@@ -28,7 +30,7 @@ export default function EditCarModal({ isOpen, onClose, onSave, car }) {
     }
   }, [car])
 
-  useEffect(() => { // FIX 2: Auto-recalc total when purchase costs change
+  useEffect(() => {
     if (!isSold) {
       const bid = Number(formData.winningBid) || 0
       const fee = Number(formData.additionalFee) || 0
@@ -49,9 +51,9 @@ export default function EditCarModal({ isOpen, onClose, onSave, car }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    setError('') // FIX 3: Validation
-    if (!isSold && (!formData.registration ||!formData.brand ||!formData.model ||!formData.purchaseYear)) {
-      setError('Registration, Brand, Model and Purchase Year are required')
+    setError('')
+    if (!isSold && (!formData.registration ||!formData.make ||!formData.model ||!formData.purchaseYear)) {
+      setError('Registration, Make, Model and Purchase Year are required')
       return
     }
     if (isSold && (!formData.saleAmount ||!formData.saleYear)) {
@@ -60,44 +62,46 @@ export default function EditCarModal({ isOpen, onClose, onSave, car }) {
     }
 
     const updatedCar = {
-    ...car,
-    ...formData,
+     ...car,
+     ...formData,
       purchaseYear: Number(formData.purchaseYear) || 0,
       winningBid: Number(formData.winningBid) || 0,
       additionalFee: Number(formData.additionalFee) || 0,
       delivery: Number(formData.delivery) || 0,
       repairCost: Number(formData.repairCost) || 0,
       mileagePurchase: Number(formData.mileagePurchase) || 0,
-      totalSpent: totalSpent, // Send calculated total, not manual input
+      totalSpent: totalSpent,
       saleAmount: Number(formData.saleAmount) || 0,
       saleYear: Number(formData.saleYear) || 0,
       mileageSale: Number(formData.mileageSale) || 0,
       profit: isSold? liveProfit : -totalSpent
     }
+    delete updatedCar.advertisedOn;
+
     onSave(updatedCar)
     onClose()
   }
 
   const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-  const selectClass = "w-full px-3 py-2 border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-  const disabledClass = "w-full px-3 py-2 bg-gray-100 border-gray-300 rounded-md text-gray-500 cursor-not-allowed"
+  const selectClass = "w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+  const disabledClass = "w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-500 cursor-not-allowed"
   const labelClass = "block text-xs font-medium text-gray-700 mb-1"
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl" style={{maxHeight: '90vh', display: 'flex', flexDirection: 'column'}}>
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-lg font-medium text-gray-900">{isSold? 'Edit Sale' : 'Edit Car'}</h3>
-              <p className="text-sm text-gray-500">{car.registration} - {car.brand} {car.model}</p>
+              <p className="text-sm text-gray-500">{car.registration} - {car.make} {car.model}</p>
             </div>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
           </div>
         </div>
 
-        <div style={{overflowY: 'auto', padding: '1.5rem'}}>
-          {error && <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">{error}</div>} {/* NEW */}
+        <div style={{ overflowY: 'auto', padding: '1.5rem' }}>
+          {error && <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">{error}</div>}
           <form id="edit-car-form" onSubmit={handleSubmit} className="space-y-4">
 
             {!isSold && (
@@ -106,7 +110,7 @@ export default function EditCarModal({ isOpen, onClose, onSave, car }) {
                   <h4 className="text-md font-medium text-gray-900 mb-3">Car Details</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><label className={labelClass}>Registration *</label><input name="registration" value={formData.registration} onChange={handleChange} required className={inputClass} /></div>
-                    <div><label className={labelClass}>Brand *</label><input name="brand" value={formData.brand} onChange={handleChange} required className={inputClass} /></div>
+                    <div><label className={labelClass}>Make *</label><input name="make" value={formData.make} onChange={handleChange} required className={inputClass} /></div>
                     <div><label className={labelClass}>Model *</label><input name="model" value={formData.model} onChange={handleChange} required className={inputClass} /></div>
                     <div><label className={labelClass}>Colour</label><input name="colour" value={formData.colour} onChange={handleChange} className={inputClass} /></div>
                     <div><label className={labelClass}>Engine</label><input name="engine" value={formData.engine} onChange={handleChange} className={inputClass} /></div>
@@ -128,7 +132,7 @@ export default function EditCarModal({ isOpen, onClose, onSave, car }) {
                     <div><label className={labelClass}>Mileage at Purchase</label><input name="mileagePurchase" type="number" value={formData.mileagePurchase} onChange={handleChange} className={inputClass} /></div>
                     <div><label className={labelClass}>Logbook</label><select name="logbook" value={formData.logbook} onChange={handleChange} className={selectClass}><option value="">Select</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
                     <div><label className={labelClass}>Personal Use</label><select name="personalUse" value={formData.personalUse} onChange={handleChange} className={selectClass}><option value="">Select</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
-                    <div className="md:col-span-2"><label className={labelClass}>Total Amount Spent</label><input value={totalSpent} disabled className={disabledClass} /></div> {/* FIX: removed name, now auto */}
+                    <div className="md:col-span-2"><label className={labelClass}>Total Amount Spent</label><input value={totalSpent} disabled className={disabledClass} /></div>
                   </div>
                 </div>
               </>
@@ -140,8 +144,12 @@ export default function EditCarModal({ isOpen, onClose, onSave, car }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div><label className={labelClass}>Sale Amount £ *</label><input name="saleAmount" type="number" value={formData.saleAmount} onChange={handleChange} required className={inputClass} /></div>
                   <div><label className={labelClass}>Sale Year *</label><input name="saleYear" type="number" value={formData.saleYear} onChange={handleChange} required className={inputClass} /></div>
+                  <div><label className={labelClass}>Platform Sold On</label><input name="platformSoldOn" value={formData.platformSoldOn} onChange={handleChange} className={inputClass} /></div>
+                  <div><label className={labelClass}>Advertised Platforms</label><input name="advertisedPlatforms" value={formData.advertisedPlatforms} onChange={handleChange} className={inputClass} placeholder="e.g. AUTOTRADER, FACEBOOK" /></div>
+                  <div><label className={labelClass}>Advert Duration</label><input name="advertDuration" value={formData.advertDuration} onChange={handleChange} className={inputClass} /></div>
+                  <div><label className={labelClass}>Mileage at Sale</label><input name="mileageSale" type="number" value={formData.mileageSale} onChange={handleChange} className={inputClass} /></div>
                   <div className="md:col-span-2 p-3 bg-gray-50 rounded-md border border-gray-200">
-                    <p className="text-xs text-gray-600">Total Spent: £{totalSpent.toLocaleString()}</p> {/* FIX: uses live total */}
+                    <p className="text-xs text-gray-600">Total Spent: £{totalSpent.toLocaleString()}</p>
                     <p className={`text-sm font-bold ${liveProfit >= 0? 'text-green-600' : 'text-red-600'}`}>Profit: £{liveProfit.toLocaleString()}</p>
                   </div>
                 </div>
@@ -153,7 +161,7 @@ export default function EditCarModal({ isOpen, onClose, onSave, car }) {
 
         <div className="px-6 py-4 border-t border-gray-200">
           <div className="flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
             <button type="submit" form="edit-car-form" className={`px-4 py-2 text-sm font-medium text-white rounded-md ${isSold? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}>{isSold? 'Save Sale' : 'Save Changes'}</button>
           </div>
         </div>

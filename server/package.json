@@ -1,16 +1,22 @@
 {
-  "name": "server",
+  "name": "bajfaj-car-management",
   "version": "1.0.0",
-  "description": "Bajfaj Car Management API",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start": "node index.js"
-  },
+  "dev": "cross-env NODE_ENV=development PORT=3001 nodemon index.js",
+  "test": "cross-env NODE_ENV=test PORT=3002 nodemon index.js",
+  "prod": "cross-env NODE_ENV=production PORT=3000 node index.js",
+   "migrate": "node migrate.js"
+},
   "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^4.22.2",
-    "mysql2": "^3.23.3",
-    "sqlite3": "^6.0.1"
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.19.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "nodemon": "^3.1.14"
   }
 }

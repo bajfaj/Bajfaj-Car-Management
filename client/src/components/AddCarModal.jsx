@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 
 export default function AddCarModal({ isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({
-    registration: '', brand: '', model: '', colour: '', engine: '', transmission: '', fuel: '',
+    registration: '', make: '', model: '', colour: '', engine: '', transmission: '', fuel: '', // <-- make
     logbook: '', purchaseYear: '', source: '', winningBid: '', additionalFee: '', delivery: '',
     repairCost: '', mechanic: '', personalUse: '', mileagePurchase: '',
   })
@@ -31,14 +31,13 @@ export default function AddCarModal({ isOpen, onClose, onSave }) {
     setError('') // NEW
 
     // NEW: Validation
-    if (!formData.registration ||!formData.brand ||!formData.model ||!formData.purchaseYear) {
-      setError('Registration, Brand, Model and Purchase Year are required')
+    if (!formData.registration ||!formData.make ||!formData.model ||!formData.purchaseYear) { // <-- make
+      setError('Registration, Make, Model and Purchase Year are required')
       return
     }
 
     const newCar = {
     ...formData,
-      id: Date.now(),
       purchaseYear: Number(formData.purchaseYear),
       winningBid: Number(formData.winningBid),
       additionalFee: Number(formData.additionalFee),
@@ -47,14 +46,14 @@ export default function AddCarModal({ isOpen, onClose, onSave }) {
       mileagePurchase: Number(formData.mileagePurchase),
       totalSpent,
       status: 'Held',
-      profit: -totalSpent,
-      saleAmount: null, saleYear: null, platformSoldOn: null,
-      advertisedOn: null, advertDuration: null, mileageSale: null,
+      profit: 0, // <-- FIXED: was -totalSpent
+      saleAmount: null, saleYear: null, platformSoldOn: null, // <-- removed id: Date.now()
+      advertisedPlatforms: null, advertDuration: null, mileageSale: null,
     }
-    onSave(newCar)
+    onSave(newCar) // PESSIMISTIC: let parent refetch
     onClose()
     setFormData({
-      registration: '', brand: '', model: '', colour: '', engine: '', transmission: '', fuel: '',
+      registration: '', make: '', model: '', colour: '', engine: '', transmission: '', fuel: '', // <-- make
       logbook: '', purchaseYear: '', source: '', winningBid: '', additionalFee: '', delivery: '',
       repairCost: '', mechanic: '', personalUse: '', mileagePurchase: '',
     })
@@ -90,8 +89,8 @@ export default function AddCarModal({ isOpen, onClose, onSave }) {
                   <input name="registration" value={formData.registration} onChange={handleChange} placeholder="e.g. AB12 CDE" required style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>Brand *</label>
-                  <input name="brand" value={formData.brand} onChange={handleChange} placeholder="e.g. BMW" required style={inputStyle} />
+                  <label style={labelStyle}>Make *</label> {/* <-- Make */}
+                  <input name="make" value={formData.make} onChange={handleChange} placeholder="e.g. BMW" required style={inputStyle} /> {/* <-- make */}
                 </div>
                 <div>
                   <label style={labelStyle}>Model *</label>
