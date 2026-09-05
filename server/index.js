@@ -135,20 +135,41 @@ app.post('/api/cars', (req, res) => {
 
 app.put('/api/cars/:id', (req, res) => {
   const { id } = req.params;
-  const c = { ...req.body };
-  if (c.advertisedOn && !c.advertisedPlatforms) c.advertisedPlatforms = c.advertisedOn;
-  delete c.advertisedOn;
-  const totalSpent = (Number(c.winningBid)||0)+(Number(c.additionalFee)||0)+(Number(c.delivery)||0)+(Number(c.repairCost)||0);
-  c.totalSpent = totalSpent;
-  c.profit = c.status === 'Sold' ? (Number(c.saleAmount)-totalSpent) : -totalSpent;
-  const allowed = ['registration','make','model','colour','engine','engineSize','transmission','fuel','logbook','purchaseYear','source','winningBid','additionalFee','delivery','repairCost','mechanic','personalUse','mileage','mileagePurchase','mileageSale','totalSpent','status','profit','saleAmount','saleYear','platformSoldOn','advertisedPlatforms','advertDuration','deleted','deleted_at','deleted_reason'];
-  const keys = Object.keys(c).filter(k => k!=='id' && allowed.includes(k));
-  const values = keys.map(k => c[k]);
-  const setClause = keys.map(k => `${k} =?`).join(', ');
-  if (!keys.length) return res.status(400).json({error:'No valid fields'});
-  db.run(`UPDATE cars SET ${setClause} WHERE id =?`, [...values, id], function(err){
-    if (err) { console.error('SQL ERROR PUT:', err.message); return res.status(500).json({error: err.message}); }
-    res.json({ success: true });
+
+  // 1. FIRST fetch existing car — this is the fix
+  db.get('SELECT * FROM cars WHERE id =?', [id], (err, existing) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!existing) return res.status(404).json({ error: 'Car not found' });
+
+    // 2. MERGE old + new — winningBid etc will survive even if not sent
+    const body = {...req.body };
+    if (body.advertisedOn &&!body.advertisedPlatforms) body.advertisedPlatforms = body.advertisedOn;
+    delete body.advertisedOn;
+
+    const c = {...existing,...body };
+
+    // 3. Recalculate using merged data
+    const totalSpent = (Number(c.winningBid)||0)+(Number(c.additionalFee)||0)+(Number(c.delivery)||0)+(Number(c.repairCost)||0);
+    c.totalSpent = totalSpent;
+    c.profit = c.status === 'Sold'? (Number(c.saleAmount)||0)-totalSpent : -totalSpent;
+
+    // 4. Build dynamic update — ONLY update what was sent + totalSpent/profit
+    // This keeps your original clever logic but ensures calculations are correct
+    const allowed = ['registration','make','model','colour','engine','engineSize','transmission','fuel','logbook','purchaseYear','source','winningBid','additionalFee','delivery','repairCost','mechanic','personalUse','mileage','mileagePurchase','mileageSale','totalSpent','status','profit','saleAmount','saleYear','platformSoldOn','advertisedPlatforms','advertDuration','deleted','deleted_at','deleted_reason'];
+
+    // We always want to persist totalSpent/profit, plus anything client sent
+    const keysToUpdate = new Set([...Object.keys(body), 'totalSpent', 'profit']);
+    const keys = [...keysToUpdate].filter(k => k!=='id' && allowed.includes(k));
+
+    const values = keys.map(k => c[k]);
+    const setClause = keys.map(k => `${k} =?`).join(', ');
+
+    if (!keys.length) return res.status(400).json({error:'No valid fields'});
+
+    db.run(`UPDATE cars SET ${setClause} WHERE id =?`, [...values, id], function(err){
+      if (err) { console.error('SQL ERROR PUT:', err.message); return res.status(500).json({error: err.message}); }
+      res.json({ success: true });
+    });
   });
 });
 
