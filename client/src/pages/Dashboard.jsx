@@ -18,12 +18,12 @@ export default function Dashboard() {
   useEffect(() => {
     // Use relative path so proxy in vite.config works
     fetch(`/api/cars`)
-     .then(res => res.json())
-     .then(data => {
+      .then(res => res.json())
+      .then(data => {
         setCars(data)
         setLoading(false)
       })
-     .catch(err => {
+      .catch(err => {
         console.error(err)
         setLoading(false)
       })
@@ -34,12 +34,14 @@ export default function Dashboard() {
   const carsHeld = cars.filter(c => c.status === 'Held').length
   const carsSold = cars.filter(c => c.status === 'Sold').length
   const totalProfit = cars.reduce((sum, c) => sum + (c.profit || 0), 0)
-  const avgProfit = carsSold > 0? totalProfit / carsSold : 0
+  const avgProfit = carsSold > 0 ? totalProfit / carsSold : 0
   const currentYear = new Date().getFullYear()
   const soldThisYear = cars.filter(c => c.status === 'Sold' && c.saleYear === currentYear).length
 
   // Last 5 added cars
-  const recentCars = [...cars].slice(0, 5)
+  const recentCars = [...cars].sort((a, b) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  ).slice(0, 5)
 
   if (loading) return <p>Loading dashboard...</p>
 
@@ -80,7 +82,7 @@ export default function Dashboard() {
         </div>
         <div className="bg-white p-4 rounded-lg shadow border-gray-200">
           <p className="text-sm text-gray-500">Avg Profit / Sold Car</p>
-          <p className="text-2xl font-bold text-green-600">£{avgProfit.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+          <p className="text-2xl font-bold text-green-600">£{avgProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
         </div>
       </div>
 
@@ -99,18 +101,17 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {recentCars.length === 0? (
+              {recentCars.length === 0 ? (
                 <tr><td colSpan="5" className="text-center py-4 text-gray-400">No cars yet</td></tr>
               ) : (
                 recentCars.map(car => (
                   <tr key={car.id} className="border-b last:border-0">
                     <td className="py-2">{car.registration}</td>
-                    <td className="py-2">{car.brand}</td>
+                    <td className="py-2">{car.make}</td>
                     <td className="py-2">{car.model}</td>
                     <td className="py-2">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        car.status === 'Sold'? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-xs ${car.status === 'Sold' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                        }`}>
                         {car.status}
                       </span>
                     </td>

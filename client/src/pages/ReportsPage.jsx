@@ -21,12 +21,12 @@ export default function ReportsPage() {
 
   // Get unique years and brands for filters
   const years = ['All', ...new Set(cars.map(c => c.saleYear).filter(Boolean))].sort((a,b) => b-a)
-  const brands = ['All', ...new Set(cars.map(c => c.brand).filter(Boolean))]
+  const brands = ['All', ...new Set(cars.map(c => c.make).filter(Boolean))]
 
   // Apply filters
   const filteredCars = cars.filter(c => {
     const yearMatch = yearFilter === 'All' || c.saleYear === parseInt(yearFilter)
-    const brandMatch = brandFilter === 'All' || c.brand === brandFilter
+    const brandMatch = brandFilter === 'All' || c.make === brandFilter
     return yearMatch && brandMatch
   })
 
@@ -66,17 +66,17 @@ export default function ReportsPage() {
         </div>
         <div className="bg-white p-4 rounded-lg shadow border-gray-200">
           <p className="text-sm text-gray-500">Most Expensive</p>
-          <p className="text-lg font-bold">{mostExpensive.brand} {mostExpensive.model}</p>
+          <p className="text-lg font-bold">{mostExpensive.make} {mostExpensive.model}</p>
           <p className="text-sm text-green-600">£{(mostExpensive.saleAmount || 0).toLocaleString()}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow border-gray-200">
           <p className="text-sm text-gray-500">Most Profit</p>
-          <p className="text-lg font-bold">{mostProfit.brand} {mostProfit.model}</p>
+          <p className="text-lg font-bold">{mostProfit.make} {mostProfit.model}</p>
           <p className="text-sm text-green-600">£{(mostProfit.profit || 0).toLocaleString()}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow border-gray-200">
           <p className="text-sm text-gray-500">Biggest Loss</p>
-          <p className="text-lg font-bold">{biggestLoss.brand} {biggestLoss.model}</p>
+          <p className="text-lg font-bold">{biggestLoss.make} {biggestLoss.model}</p>
           <p className="text-sm text-red-600">£{(biggestLoss.profit || 0).toLocaleString()}</p>
         </div>
       </div>
@@ -101,7 +101,7 @@ export default function ReportsPage() {
               filteredCars.map(car => (
                 <tr key={car.id} className="border-t">
                   <td className="p-3">{car.registration}</td>
-                  <td className="p-3">{car.brand}</td>
+                  <td className="p-3">{car.make}</td>
                   <td className="p-3">{car.model}</td>
                   <td className="p-3">{car.saleYear || '-'}</td>
                   <td className="p-3">£{(car.saleAmount || 0).toLocaleString()}</td>
