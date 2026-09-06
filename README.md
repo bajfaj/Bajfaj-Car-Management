@@ -3,7 +3,7 @@
 ## Project Overview
 Full-stack web application to manage car inventory, replacing manual spreadsheet workflows. Tracks vehicle purchases, repairs, sales, and auto-calculates financial metrics including total spend and profit/loss. Built post-redundancy to enhance modern QA engineering, React development, and product delivery skills.
 
-**Status:** M1 + M2 + M3 Complete | M4 Polished Planned | M5 WIP | M6 Planned 
+**Status:** M1 + M2 + M3 Complete | M4 Polished Planned | M5 WIP | M6 Planned  
 **Live Demo:** TBD  
 
 **Related Repo:** Automated API Tests: [bajfaj/Bajfaj-Car-Tests](https://github.com/bajfaj/Bajfaj-Car-Tests) - 8/8 Playwright Tests Passing + Bug Found & Fixed
