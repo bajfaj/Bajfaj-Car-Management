@@ -5,6 +5,8 @@ import fs from 'fs';
 import express from 'express';
 import cors from 'cors';
 import sqlite3 from 'sqlite3';
+import authRouter from './src/routes/auth.js';
+import { authMiddleware } from './src/middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,6 +44,9 @@ const DB_PATH = process.env.DATABASE_URL;
 
 app.use(cors());
 app.use(express.json());
+
+// --- AUTH ROUTE (PUBLIC) ---
+app.use('/api/auth', authRouter);
 
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
@@ -105,14 +110,15 @@ function initDb() {
   });
 }
 
-app.get('/api/cars', (req, res) => {
+// --- PROTECTED CAR ROUTES ---
+app.get('/api/cars', authMiddleware, (req, res) => {
   db.all('SELECT * FROM cars WHERE deleted = 0 OR deleted IS NULL ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
 });
 
-app.get('/api/cars/deleted', (req, res) => {
+app.get('/api/cars/deleted', authMiddleware, (req, res) => {
   db.all('SELECT * FROM cars WHERE deleted = 1 ORDER BY deleted_at DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
@@ -178,7 +184,6 @@ function validateCarPayload(c, isUpdate = false, existing = null) {
     }
   }
 
-  // VAL-09,10,11,12 - only check when final status is Sold
   if (merged.status === 'Sold') {
     if (merged.saleAmount === undefined || merged.saleAmount === '' || merged.saleAmount === null || Number(merged.saleAmount) <= 0) {
       errors.push('saleAmount is required when status is Sold');
@@ -199,7 +204,7 @@ function validateCarPayload(c, isUpdate = false, existing = null) {
   return errors;
 }
 
-app.post('/api/cars', (req, res) => {
+app.post('/api/cars', authMiddleware, (req, res) => {
   const c = req.body;
   const errors = validateCarPayload(c, false, null);
   if (errors.length) {
@@ -217,14 +222,13 @@ app.post('/api/cars', (req, res) => {
   });
 });
 
-app.put('/api/cars/:id', (req, res) => {
+app.put('/api/cars/:id', authMiddleware, (req, res) => {
   const { id } = req.params;
 
   db.get('SELECT * FROM cars WHERE id =?', [id], (err, existing) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!existing) return res.status(404).json({ error: 'Car not found' });
 
-    // VALIDATE AFTER MERGE - this fixes VAL-09 to VAL-12
     const errors = validateCarPayload(req.body, true, existing);
     if (errors.length) {
       return res.status(400).json({ errors });
@@ -253,7 +257,7 @@ app.put('/api/cars/:id', (req, res) => {
   });
 });
 
-app.delete('/api/cars/:id', (req, res) => {
+app.delete('/api/cars/:id', authMiddleware, (req, res) => {
   const { id } = req.params;
   const { reason } = req.body || {};
   db.run('UPDATE cars SET deleted = 1, deleted_at = CURRENT_TIMESTAMP, deleted_reason =? WHERE id =?', [reason || '', id], function (err) {
@@ -262,14 +266,14 @@ app.delete('/api/cars/:id', (req, res) => {
   });
 });
 
-app.put('/api/cars/:id/restore', (req, res) => {
+app.put('/api/cars/:id/restore', authMiddleware, (req, res) => {
   db.run('UPDATE cars SET deleted = 0, deleted_at = NULL, deleted_reason = NULL WHERE id =?', [req.params.id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });
   });
 });
 
-app.delete('/api/cars/:id/permanent', (req, res) => {
+app.delete('/api/cars/:id/permanent', authMiddleware, (req, res) => {
   db.run('DELETE FROM cars WHERE id =?', [req.params.id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });

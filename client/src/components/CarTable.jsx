@@ -4,6 +4,7 @@ import AddCarModal from './AddCarModal'
 import SellCarModal from './SellCarModal'
 import EditCarModal from './EditCarModal'
 import ViewCarModal from './ViewCarModal'
+import { authFetch } from '../utils/api'
 
 const API_URL = '/api/cars'
 const TABS = ['All', 'Held', 'Sold', 'Deleted']
@@ -36,8 +37,8 @@ export default function CarTable() {
     setLoading(true)
     try {
       const [activeRes, deletedRes] = await Promise.all([
-        fetch(API_URL),
-        fetch(`${API_URL}/deleted`)
+        authFetch(API_URL),
+        authFetch(`${API_URL}/deleted`)
       ])
       setCars(await activeRes.json())
       setDeletedCars(await deletedRes.json())
@@ -51,40 +52,37 @@ export default function CarTable() {
 
   const handleSaveCar = async (newCar) => {
     console.log('Saving new car:', newCar.registration)
-    const res = await fetch(API_URL, {
+    const res = await authFetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newCar)
     })
     if(!res.ok) return alert('Failed to save car')
-    await fetchData() // PESSIMISTIC: refetch instead of optimistic
+    await fetchData()
     setIsAddModalOpen(false)
   }
 
   const handleUpdateCar = async (updatedCarData) => {
     console.log('Updating car:', updatedCarData.id)
-    const res = await fetch(`${API_URL}/${updatedCarData.id}`, {
+    const res = await authFetch(`${API_URL}/${updatedCarData.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedCarData)
     })
     if(!res.ok) return alert('Failed to update car')
-    await fetchData() // PESSIMISTIC: refetch instead of optimistic
-
+    await fetchData()
     setIsSellModalOpen(false)
     setIsEditModalOpen(false)
     setSelectedCar(null)
   }
 
   const handleRestore = async (id) => {
-    await fetch(`${API_URL}/${id}/restore`, { method: 'PUT' })
-    fetchData() // restore moves between tabs so refetch
+    await authFetch(`${API_URL}/${id}/restore`, { method: 'PUT' })
+    fetchData()
   }
 
   const handlePermanentDelete = async (id) => {
     if (!confirm("Permanently delete? This cannot be undone.")) return
-    await fetch(`${API_URL}/${id}/permanent`, { method: 'DELETE' })
-    fetchData() // PESSIMISTIC
+    await authFetch(`${API_URL}/${id}/permanent`, { method: 'DELETE' })
+    fetchData()
   }
 
   const openDeleteModal = (car) => {
@@ -99,13 +97,12 @@ export default function CarTable() {
     const finalReason = deleteReason === 'Other'? deleteOtherReason.trim() : deleteReason
     if (deleteReason === 'Other' &&!finalReason) return alert('Please enter a reason for deletion')
 
-    await fetch(`${API_URL}/${carToDelete.id}`, {
+    await authFetch(`${API_URL}/${carToDelete.id}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reason: finalReason })
     })
 
-    await fetchData() // PESSIMISTIC
+    await fetchData()
     setIsDeleteModalOpen(false)
     setCarToDelete(null)
   }
@@ -169,7 +166,6 @@ export default function CarTable() {
           <div className="p-6 text-center text-gray-500">No cars found</div>
         ) : (
           <>
-            {/* Mobile */}
             <div className="md:hidden divide-y divide-gray-200">
               {filteredCars().map((car) => (
                 <div key={car.id} className="p-4">
@@ -184,7 +180,7 @@ export default function CarTable() {
                   </div>
                   <div className="text-sm mt-2 pt-2 border-t space-y-1">
                     <p>Spent: £{car.totalSpent?.toLocaleString() || 0}</p>
-                    {isSold(car) && ( // <-- FIX 1: Only show sale info if sold
+                    {isSold(car) && (
                       <>
                         <p>Sold: £{car.saleAmount?.toLocaleString() || 0}</p>
                         <p>Sale Year: {car.saleYear || 'N/A'}</p>
@@ -193,7 +189,7 @@ export default function CarTable() {
                         </p>
                       </>
                     )}
-                    {!isSold(car) && <p className="text-gray-400">Profit: -</p>} {/* <-- FIX 2: Show - if not sold */}
+                    {!isSold(car) && <p className="text-gray-400">Profit: -</p>}
                     {activeTab === 'Deleted' && <p className="text-red-600">Reason: {car.deleted_reason}</p>}
                   </div>
                   <div className="mt-3"><ActionButtons car={car} /></div>
@@ -201,7 +197,6 @@ export default function CarTable() {
               ))}
             </div>
 
-            {/* Desktop */}
             <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -229,8 +224,8 @@ export default function CarTable() {
                       <td className="px-4 py-3 text-sm">{car.engine} / {car.fuel}</td>
                       <td className="px-4 py-3 text-sm">{car.purchaseYear}</td>
                       <td className="px-4 py-3 text-sm">£{car.totalSpent?.toLocaleString() || 0}</td>
-                      <td className="px-4 py-3 text-sm">{isSold(car)? `£${car.saleAmount?.toLocaleString() || 0}` : '-'}</td> {/* <-- FIX 3 */}
-                      <td className="px-4 py-3 text-sm">{isSold(car)? car.saleYear || '-' : '-'}</td> {/* <-- FIX 3 */}
+                      <td className="px-4 py-3 text-sm">{isSold(car)? `£${car.saleAmount?.toLocaleString() || 0}` : '-'}</td>
+                      <td className="px-4 py-3 text-sm">{isSold(car)? car.saleYear || '-' : '-'}</td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${isSold(car)? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                           {car.status}
@@ -238,7 +233,7 @@ export default function CarTable() {
                       </td>
                       {activeTab === 'Deleted' && <td className="px-4 py-3 text-sm text-red-600">{car.deleted_reason}</td>}
                       <td className={`px-4 py-3 text-sm font-bold ${isSold(car) && car.profit >= 0? 'text-green-600' : isSold(car)? 'text-red-600' : 'text-gray-400'}`}>
-                        {isSold(car)? `£${car.profit?.toLocaleString() || 0}` : '-'} {/* <-- FIX 3: Only show profit if sold */}
+                        {isSold(car)? `£${car.profit?.toLocaleString() || 0}` : '-'}
                       </td>
                       <td className="px-4 py-3 text-sm"><ActionButtons car={car} /></td>
                     </tr>
