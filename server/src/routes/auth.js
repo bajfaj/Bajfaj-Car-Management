@@ -1,24 +1,23 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import db from '../../database.js';
 
 const router = express.Router();
 
-// For now - single admin user. Later DB.
-const USER = {
-  email: 'admin@bajfaj.com',
-  passwordHash: bcrypt.hashSync('Admin123!', 10)
-};
-
-router.post('/login', async (req, res) => {
+router.post('/login', (req, res) => {
   const { email, password } = req.body;
-  if (email!== USER.email) return res.status(401).json({message: 'Invalid creds'});
+  if (!email ||!password) return res.status(400).json({ message: 'Email and password required' });
 
-  const ok = await bcrypt.compare(password, USER.passwordHash);
-  if (!ok) return res.status(401).json({message: 'Invalid creds'});
+  db.get('SELECT * FROM users WHERE email =?', [email.trim().toLowerCase()], async (err, user) => {
+    if (err) return res.status(500).json({ message: 'DB error' });
+    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+    const ok = await bcrypt.compare(password, user.password_hash);
+    if (!ok) return res.status(401).json({ message: 'Invalid credentials' });
 
-  const token = jwt.sign({ email }, process.env.JWT_SECRET || 'bajfaj_secret_dev', { expiresIn: '1d' });
-  res.json({ token, email });
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    res.json({ token, email: user.email });
+  });
 });
 
 export default router;
