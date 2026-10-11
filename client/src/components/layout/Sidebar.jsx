@@ -1,6 +1,15 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 
 export default function Sidebar({ onLinkClick }) {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    if (onLinkClick) onLinkClick();
+    navigate('/login');
+  };
+
   const linkClass = ({ isActive }) => 
     `block py-2 px-2 rounded transition-colors ${
       isActive 
@@ -9,7 +18,7 @@ export default function Sidebar({ onLinkClick }) {
     }`
 
   return (
-    <div className="w-64 bg-gray-900 text-white min-h-screen p-4">
+    <div className="w-64 bg-gray-900 text-white min-h-screen p-4 flex flex-col">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-xl font-bold">Bajfaj</h1>
         <button 
@@ -23,7 +32,7 @@ export default function Sidebar({ onLinkClick }) {
         </button>
       </div>
       
-      <nav className="space-y-2">
+      <nav className="space-y-2 flex-1">
         <NavLink to="/dashboard" onClick={onLinkClick} className={linkClass}>
           Dashboard
         </NavLink>
@@ -34,6 +43,14 @@ export default function Sidebar({ onLinkClick }) {
           Reports / Analytics
         </NavLink>
       </nav>
+
+      {/* NEW - Logout */}
+      <button
+        onClick={handleLogout}
+        className="mt-6 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium w-full"
+      >
+        Logout
+      </button>
     </div>
   )
 }

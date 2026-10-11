@@ -4,16 +4,19 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-  "dev": "cross-env NODE_ENV=development PORT=3001 nodemon index.js",
-  "test": "cross-env NODE_ENV=test PORT=3002 nodemon index.js",
-  "prod": "cross-env NODE_ENV=production PORT=3000 node index.js",
-   "migrate": "node migrate.js"
-},
+    "dev": "cross-env NODE_ENV=development PORT=3001 nodemon index.js",
+    "test": "cross-env NODE_ENV=test PORT=3002 nodemon index.js",
+    "prod": "cross-env NODE_ENV=production PORT=3000 node index.js",
+    "migrate": "node migrate.js"
+  },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.19.2",
-    "sqlite3": "^5.1.7"
+    "jsonwebtoken": "^9.0.3",
+    "sqlite3": "^5.1.7",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

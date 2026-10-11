@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { authFetch } from '../utils/api'
 
 export default function ReportsPage() {
   const [cars, setCars] = useState([])
@@ -7,7 +8,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/cars')
+    authFetch('/api/cars')
       .then(res => res.json())
       .then(data => {
         setCars(data)
@@ -19,18 +20,15 @@ export default function ReportsPage() {
       })
   }, [])
 
-  // Get unique years and brands for filters
   const years = ['All', ...new Set(cars.map(c => c.saleYear).filter(Boolean))].sort((a,b) => b-a)
   const brands = ['All', ...new Set(cars.map(c => c.make).filter(Boolean))]
 
-  // Apply filters
   const filteredCars = cars.filter(c => {
     const yearMatch = yearFilter === 'All' || c.saleYear === parseInt(yearFilter)
     const brandMatch = brandFilter === 'All' || c.make === brandFilter
     return yearMatch && brandMatch
   })
 
-  // KPIs
   const totalCars = filteredCars.length
   const mostExpensive = filteredCars.reduce((max, c) => (c.saleAmount || 0) > (max.saleAmount || 0) ? c : max, {})
   const mostProfit = filteredCars.reduce((max, c) => (c.profit || 0) > (max.profit || 0) ? c : max, {})
@@ -42,7 +40,6 @@ export default function ReportsPage() {
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Reports / Analytics</h1>
 
-      {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow border-gray-200 mb-6 flex gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
@@ -58,30 +55,28 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow border-gray-200">
+        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
           <p className="text-sm text-gray-500">Total Cars</p>
           <p className="text-2xl font-bold">{totalCars}</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow border-gray-200">
+        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
           <p className="text-sm text-gray-500">Most Expensive</p>
           <p className="text-lg font-bold">{mostExpensive.make} {mostExpensive.model}</p>
           <p className="text-sm text-green-600">£{(mostExpensive.saleAmount || 0).toLocaleString()}</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow border-gray-200">
+        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
           <p className="text-sm text-gray-500">Most Profit</p>
           <p className="text-lg font-bold">{mostProfit.make} {mostProfit.model}</p>
           <p className="text-sm text-green-600">£{(mostProfit.profit || 0).toLocaleString()}</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow border-gray-200">
+        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
           <p className="text-sm text-gray-500">Biggest Loss</p>
           <p className="text-lg font-bold">{biggestLoss.make} {biggestLoss.model}</p>
           <p className="text-sm text-red-600">£{(biggestLoss.profit || 0).toLocaleString()}</p>
         </div>
       </div>
 
-      {/* Summary Table */}
       <div className="bg-white rounded-lg shadow border-gray-200 overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-gray-500">
