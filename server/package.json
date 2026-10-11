@@ -15,7 +15,8 @@
     "dotenv": "^16.6.1",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.3",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
