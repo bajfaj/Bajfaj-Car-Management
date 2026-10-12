@@ -8,7 +8,7 @@ import { authMiddleware, blacklist } from '../middleware/auth.js';
 const router = express.Router();
 
 const loginSchema = z.object({
-  email: z.string().min(1, 'Email is required').pipe(z.email('Invalid email format')),
+  email: z.string().trim().toLowerCase().min(1, 'Email is required').pipe(z.email('Invalid email format')),
   password: z.string().min(1, 'Password is required')
 });
 
@@ -21,7 +21,7 @@ router.post('/login', (req, res) => {
     });
   }
   const { email, password } = parsed.data;
-  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedEmail = email; // already trimmed + lowercased by zod
 
   db.get('SELECT * FROM users WHERE email =?', [normalizedEmail], async (err, user) => {
     if (err) return res.status(500).json({ message: 'DB error' });
@@ -42,10 +42,7 @@ router.post('/login', (req, res) => {
 router.post('/logout', authMiddleware, (req, res) => {
   const token = req.headers.authorization.split(' ')[1];
   blacklist.add(token);
-
-  // auto-remove after 24h when JWT would have expired anyway
   setTimeout(() => blacklist.delete(token), 24 * 60 * 60 * 1000);
-
   res.status(200).json({ message: 'Logged out' });
 });
 
